@@ -655,8 +655,9 @@ function getTier(val, refItem) {
   return refItem.tiers[refItem.tiers.length - 1];
 }
 
-let SCRIPT_URL = localStorage.getItem('hc_script_url') || '';
-let APP_URL    = localStorage.getItem('hc_app_url')    || window.location.href.split('?')[0];
+
+  let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfSEi1j5b6CaBdWyzlKZKW3Qua6-u4n26nkKX4JkGcuB0-_-N1CtWx-xpsTDCHEboO/exec';
+let APP_URL    = 'https://wlpcjj2516-ctrl.github.io/-health-check/';
 let allPatients = [];
 let labBase64s  = [];
 let labFiles_   = [];
