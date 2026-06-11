@@ -1325,7 +1325,13 @@ function renderResult(p) {
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
       <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>
       <div id="img-preview-wrap" style="display:none;margin-top:14px;text-align:center">
-        <p style="font-size:.82rem;color:var(--teal);font-weight:600;margin-bottom:8px">📌 กดค้างที่ภาพด้านล่าง แล้วเลือก "บันทึกภาพ" ค่ะ</p>
+        <div style="background:var(--teal-p);border:1.5px solid var(--teal-l);border-radius:10px;padding:12px 16px;margin-bottom:10px;text-align:left">
+          <div style="font-weight:700;color:var(--teal);margin-bottom:6px">📸 วิธีบันทึกภาพ</div>
+          <div style="font-size:.8rem;color:var(--txt-m);line-height:1.8">
+            <div>📱 <b>iPhone:</b> กดปุ่ม Side + Volume Up พร้อมกัน</div>
+            <div>🤖 <b>Android:</b> กดปุ่ม Power + Volume Down พร้อมกัน</div>
+          </div>
+        </div>
         <img id="img-preview" style="width:100%;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)" src="" alt="ผลตรวจสุขภาพ">
         <button class="btn btn-ghost" style="margin-top:10px;width:100%" onclick="document.getElementById('img-preview-wrap').style.display='none';document.getElementById('btn-save-img').style.display='flex'">✕ ปิด</button>
       </div>
