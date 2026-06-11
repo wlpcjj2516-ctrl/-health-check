@@ -1324,13 +1324,7 @@ function renderResult(p) {
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
       <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>
-      <div id="img-preview-wrap" style="display:none;margin-top:14px;text-align:center">
-        <div style="position:sticky;top:0;z-index:10000;background:rgba(0,0,0,.85);color:#fff;padding:10px 16px;text-align:center;font-size:.82rem">
-          📸 <b>Screenshot เพื่อบันทึก:</b> iPhone กด Side+Volume Up | Android กด Power+Volume Down
-          <button onclick="const w=document.getElementById('img-preview-wrap');w.style.display='none';w.style.position='';w.style.top='';w.style.left='';w.style.right='';w.style.bottom='';w.style.zIndex='';w.style.background='';w.style.padding='';document.getElementById('btn-save-img').style.display='flex'" style="margin-left:12px;background:#fff;color:#000;border:none;border-radius:6px;padding:4px 12px;font-size:.8rem;cursor:pointer">✕ ปิด</button>
-        </div>
-        <img id="img-preview" style="width:100%;display:block" src="" alt="ผลตรวจสุขภาพ">
-      </div>
+
     </div>
     ${secHtml}${noteHtml}`;
   goPage('pg-result');
