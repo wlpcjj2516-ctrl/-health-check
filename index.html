@@ -840,6 +840,24 @@ function filterList() {
   renderList(allPatients.filter(p=>!q||p.pid.includes(q)||p.name.toLowerCase().includes(q)));
 }
 
+function fmtDate(str) {
+  if (!str) return '—';
+  // ISO format เช่น 2516-01-08T17:00:00.000Z หรือ 2024-01-08
+  if (str.includes('T') || (str.includes('-') && str.length >= 10)) {
+    try {
+      const d = new Date(str);
+      if (!isNaN(d)) {
+        // แปลงปี ค.ศ. เป็น พ.ศ.
+        const day   = String(d.getDate()).padStart(2,'0');
+        const month = String(d.getMonth()+1).padStart(2,'0');
+        const year  = d.getFullYear() < 2400 ? d.getFullYear()+543 : d.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+    } catch(e) {}
+  }
+  return str; // ถ้าเป็น dd/mm/yyyy อยู่แล้ว คืนค่าเดิม
+}
+
 function renderList(list) {
   const tb = document.getElementById('list-tbody');
   const em = document.getElementById('list-empty');
@@ -856,7 +874,7 @@ function renderList(list) {
       : '<span class="badge bd">✅ ปกติ</span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${i+1}</td><td style="font-size:.77rem">${p.pid}</td>
-      <td>${p.name||'—'}</td><td>${p.dob||'—'}</td><td>${p.regDate||'—'}</td><td>${st}</td>
+      <td>${p.name||'—'}</td><td>${fmtDate(p.dob)}</td><td>${fmtDate(p.regDate)}</td><td>${st}</td>
       <td style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem" onclick="quickAttach('${p.pid}')">📎 แนบผล</button>
         ${p.hasResult?`<button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem" onclick="adminView('${p.pid}')">👁️ ดูผล</button>`:''}
