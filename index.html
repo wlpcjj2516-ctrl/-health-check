@@ -1359,25 +1359,30 @@ function saveResultImage() {
   if (btnEl) btnEl.style.display='none';
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
 
-  // scroll ไปบนสุดก่อน capture เพื่อให้ได้ภาพครบ
-  const origScroll = window.scrollY;
-  window.scrollTo(0, 0);
+  // สร้าง clone บน div ชั่วคราว เพื่อให้ได้สีพื้นหลังถูกต้อง
+  const clone = el.cloneNode(true);
+  clone.style.cssText = 'position:fixed;top:0;left:0;width:'+el.offsetWidth+'px;background:#f4f8f9;z-index:-9999;opacity:1;';
+  // เปิด section ทั้งหมดใน clone
+  clone.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
+  clone.querySelectorAll('.btn').forEach(b=>b.style.display='none');
+  document.body.appendChild(clone);
+  
   setTimeout(() => {
-    html2canvas(el, {
+    html2canvas(clone, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#f4f8f9',
-      width: el.offsetWidth,
-      height: el.scrollHeight,
+      width: clone.offsetWidth,
+      height: clone.scrollHeight,
       scrollY: 0,
-      windowHeight: el.scrollHeight
+      logging: false
     }).then(canvas => {
-      window.scrollTo(0, origScroll);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      document.body.removeChild(clone);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       showImageModal(dataUrl);
       if (btnEl) btnEl.style.display='flex';
     }).catch(e => {
-      window.scrollTo(0, origScroll);
+      document.body.removeChild(clone);
       if (btnEl) btnEl.style.display='flex';
       alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
     });
