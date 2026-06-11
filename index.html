@@ -197,8 +197,19 @@ tbody tr:last-child td{border:none}
   .res-ref{display:none}
   .ntab{padding:14px 10px}
 }
-@media print{.top-nav,.act-bar,footer{display:none!important}body{background:#fff}.sec-body{display:block!important}
-  #report-content .btn{display:none!important}}
+@media print{
+  .top-nav,.act-bar,footer,.btn,#btn-print{display:none!important}
+  body{background:#fff!important;margin:0;padding:0}
+  .sec-body{display:block!important}
+  .page{display:none!important}
+  #pg-result{display:block!important}
+  .result-banner{background:#0a4f5e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .result-banner *{color:#fff!important}
+  .fu{break-inside:avoid}
+  .tag.ok{background:#e8f5ee!important;color:#2e7d52!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tag.lo{background:#fde8e8!important;color:#c0392b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tag.hi{background:#fde8e8!important;color:#c0392b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 
 /* REPORT */
 .rpt-header{text-align:center;padding:16px 0 20px;border-bottom:2px solid var(--teal);margin-bottom:20px}
@@ -1003,8 +1014,9 @@ function quickAttach(pid) {
 }
 
 function adminView(pid) {
-  const p = allPatients.find(x=>x.pid===pid);
+  const p = allPatients.find(x=>String(x.pid)===String(pid));
   if (p) renderResult(p);
+  else alert('ไม่พบข้อมูลผู้ป่วยค่ะ กรุณารีเฟรชหน้าแล้วลองใหม่');
 }
 
 // ══════════════════════════════════
@@ -1271,7 +1283,7 @@ function renderResult(p) {
           <span>บัตร: ${p.pid}</span>
           <span>อายุ: ${p.dob||'—'} ปี</span>
           <span>โทร: ${p.phone||'—'}</span>
-          <span>วันตรวจ: ${p.resultDate||'—'}</span>
+          <span>วันตรวจ: ${fmtDate(p.resultDate)||'—'}</span>
         </div>
       </div>
     </div>
@@ -1282,10 +1294,27 @@ function renderResult(p) {
       <div class="sum-box hi"><div style="font-size:1.1rem">🚨</div><div class="sum-n">${hiL.length}</div><div class="sum-l">สูงกว่าเกณฑ์</div></div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
-      <button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์ผล</button>
+      <button class="btn btn-primary" onclick="printResultPDF()">🖨️ พิมพ์ผล / บันทึก PDF</button>
     </div>
     ${secHtml}${noteHtml}`;
   goPage('pg-result');
+}
+
+function printResultPDF() {
+  // ซ่อนทุก page ยกเว้น pg-result แล้วพิมพ์
+  document.querySelectorAll('.page').forEach(p=>{
+    p._prevDisplay = p.style.display;
+    p.style.display = 'none';
+  });
+  const res = document.getElementById('pg-result');
+  if (res) res.style.display = 'block';
+  window.print();
+  // คืนค่าเดิม
+  setTimeout(()=>{
+    document.querySelectorAll('.page').forEach(p=>{
+      p.style.display = p._prevDisplay || '';
+    });
+  }, 500);
 }
 
 function togSec(h){ const b=h.nextElementSibling,c=h.querySelector('.sec-chev'),o=b.style.display!=='none'; b.style.display=o?'none':'block'; c.classList.toggle('open',!o); }
@@ -1330,14 +1359,25 @@ function setDateRange(type) {
 
 function parseRegDate(str) {
   if (!str) return null;
-  // dd/mm/yyyy (พ.ศ.) → Date
-  if (str.includes('/')) {
-    const [d,m,y] = str.split('/');
+  const s = String(str);
+  // dd/mm/yyyy (พ.ศ.)
+  if (s.includes('/')) {
+    const [d,m,y] = s.split('/');
     const yr = parseInt(y) > 2400 ? parseInt(y)-543 : parseInt(y);
     return new Date(yr, parseInt(m)-1, parseInt(d));
   }
-  // ISO
-  try { return new Date(str); } catch { return null; }
+  // ISO: 2569-06-10T17:00:00.000Z หรือ 2026-06-10
+  if (s.includes('T') || (s.includes('-') && s.length >= 8)) {
+    try {
+      const d = new Date(s);
+      if (!isNaN(d)) {
+        // ถ้าเป็น พ.ศ. ให้ลบ 543
+        const yr = d.getFullYear() > 2400 ? d.getFullYear()-543 : d.getFullYear();
+        return new Date(yr, d.getMonth(), d.getDate());
+      }
+    } catch(e) {}
+  }
+  return null;
 }
 
 function filterByDate(patients) {
