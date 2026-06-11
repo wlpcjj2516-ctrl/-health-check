@@ -332,10 +332,10 @@ tbody tr:last-child td{border:none}
       </div>
       <div class="upload-zone" onclick="document.getElementById('lab-inp').click()"
            ondragover="event.preventDefault()" ondrop="labDrop(event)">
-        <input type="file" id="lab-inp" accept="image/*" multiple onchange="labFiles(this.files)">
+        <input type="file" id="lab-inp" accept="image/*,application/pdf" multiple onchange="labFiles(this.files)">
         <div style="font-size:34px;margin-bottom:8px">📷</div>
         <div style="font-size:.87rem;font-weight:600;color:var(--teal)">แตะเพื่อถ่ายภาพ / เลือกไฟล์</div>
-        <div style="font-size:.75rem;color:var(--txt-l);margin-top:4px">รองรับ JPG PNG HEIC</div>
+        <div style="font-size:.75rem;color:var(--txt-l);margin-top:4px">รองรับ JPG PNG HEIC PDF</div>
         <div class="uz-thumbs" id="lab-thumbs"></div>
       </div>
       <div style="margin-top:12px" id="ai-btn-wrap" style="display:none">
@@ -1035,7 +1035,7 @@ function onSelPatient() {
 function labDrop(e) { e.preventDefault(); labFiles(e.dataTransfer.files); }
 
 function labFiles(files) {
-  const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));
+  const arr=Array.from(files).filter(f=>f.type.startsWith('image/')||f.type==='application/pdf');
   labFiles_=arr; labBase64s=[];
   let done=0;
   arr.forEach((f,i)=>{
@@ -1048,11 +1048,20 @@ function labFiles(files) {
 
 function renderLabThumbs() {
   const s=document.getElementById('lab-thumbs'); s.innerHTML='';
-  labBase64s.forEach(b=>{
-    const img=document.createElement('img');
-    img.className='uz-thumb'; img.src=b;
-    img.onclick=()=>openImgModal(b);
-    s.appendChild(img);
+  labBase64s.forEach((b,i)=>{
+    const isPdf=labFiles_[i]?.type==='application/pdf';
+    if(isPdf){
+      const div=document.createElement('div');
+      div.className='uz-thumb';
+      div.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff3f3;border:1.5px solid #e0c0c0;border-radius:8px;font-size:.7rem;color:#c0392b;gap:2px;cursor:default;padding:4px';
+      div.innerHTML='<span style="font-size:26px">📄</span><span style="font-size:.65rem;text-align:center;word-break:break-all">'+(labFiles_[i].name.length>12?labFiles_[i].name.substring(0,12)+'...':labFiles_[i].name)+'</span>';
+      s.appendChild(div);
+    } else {
+      const img=document.createElement('img');
+      img.className='uz-thumb'; img.src=b;
+      img.onclick=()=>openImgModal(b);
+      s.appendChild(img);
+    }
   });
   const btn=document.getElementById('btn-ai');
   btn.style.display=labBase64s.length?'flex':'none';
@@ -1064,7 +1073,11 @@ async function doAI() {
   try {
     const b64=labBase64s[0].split(',')[1];
     const mime=labFiles_[0]?.type||'image/jpeg';
-    const prompt=`อ่านผลแลปจากภาพ ตอบเป็น JSON เท่านั้น ไม่มี markdown
+    const isPdf=mime==='application/pdf';
+    const contentBlock=isPdf
+      ? {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
+      : {type:'image',source:{type:'base64',media_type:mime,data:b64}};
+    const prompt=`อ่านผลแลปจากไฟล์นี้ ตอบเป็น JSON เท่านั้น ไม่มี markdown
 {"found_items":[{"key":"FBS","value":"126"},...],"confidence":"high|medium|low","notes":"..."}
 keys: FBS HbA1c Chol LDL HDL TG Hb WBC Plt AST ALT Cr UA
 ถ้าอ่านไม่ได้ไม่ต้องใส่`;
@@ -1072,7 +1085,7 @@ keys: FBS HbA1c Chol LDL HDL TG Hb WBC Plt AST ALT Cr UA
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
         messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+          contentBlock,
           {type:'text',text:prompt}
         ]}]})
     });
