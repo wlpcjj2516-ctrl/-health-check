@@ -805,9 +805,14 @@ function dlQR() {
 // ══════════════════════════════════
 // PAGE
 // ══════════════════════════════════
-function goPage(id) {
+function goPage(id, tabEl) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // อัปเดต ntab active
+  if (tabEl) {
+    document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
 }
 
 // ══════════════════════════════════
@@ -1216,8 +1221,8 @@ async function saveAttach() {
       if (idx>=0) { allPatients[idx].hasResult=true; allPatients[idx].labData=labData; allPatients[idx].doctor_note=note; }
       await loadAll();
       alert('✅ บันทึกผลเรียบร้อยค่ะ!\nผู้รับบริการสแกน QR เดิมแล้วดูผลได้ทันทีค่ะ');
-      goPage('pg-list');
-      document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',i===1));
+      const listTab = document.querySelectorAll('.ntab')[1];
+      goPage('pg-list', listTab);
     } else {
       alert('เกิดข้อผิดพลาด: '+(res.error||'unknown'));
     }
@@ -1301,20 +1306,43 @@ function renderResult(p) {
 }
 
 function printResultPDF() {
-  // ซ่อนทุก page ยกเว้น pg-result แล้วพิมพ์
-  document.querySelectorAll('.page').forEach(p=>{
-    p._prevDisplay = p.style.display;
-    p.style.display = 'none';
-  });
-  const res = document.getElementById('pg-result');
-  if (res) res.style.display = 'block';
-  window.print();
-  // คืนค่าเดิม
-  setTimeout(()=>{
-    document.querySelectorAll('.page').forEach(p=>{
-      p.style.display = p._prevDisplay || '';
-    });
-  }, 500);
+  // สร้างหน้าต่างใหม่สำหรับ print เพื่อรองรับทั้ง iOS และ Android
+  const resultHtml = document.getElementById('result-content').innerHTML;
+  const styles = Array.from(document.querySelectorAll('style')).map(s=>s.outerHTML).join('');
+  const win = window.open('', '_blank');
+  if (!win) {
+    // fallback สำหรับบางเบราว์เซอร์ที่ block popup
+    window.print();
+    return;
+  }
+  win.document.write(`<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ผลตรวจสุขภาพ — โรงพยาบาลบึงกาฬ</title>
+${styles}
+<style>
+  body{background:#f4f8f9;padding:16px;font-family:'Noto Sans Thai',sans-serif}
+  .btn{display:none!important}
+  .sec-body{display:block!important}
+  @media print{body{background:#fff;padding:0}.fu{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div style="max-width:700px;margin:0 auto">
+${resultHtml}
+</div>
+<script>
+  // ซ่อนปุ่ม
+  document.querySelectorAll('.btn').forEach(b=>b.style.display='none');
+  // เปิด section ทั้งหมด
+  document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
+  setTimeout(()=>{ window.print(); }, 600);
+<\/script>
+</body>
+</html>`);
+  win.document.close();
 }
 
 function togSec(h){ const b=h.nextElementSibling,c=h.querySelector('.sec-chev'),o=b.style.display!=='none'; b.style.display=o?'none':'block'; c.classList.toggle('open',!o); }
