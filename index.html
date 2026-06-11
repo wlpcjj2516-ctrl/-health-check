@@ -1306,43 +1306,33 @@ function renderResult(p) {
 }
 
 function printResultPDF() {
-  // สร้างหน้าต่างใหม่สำหรับ print เพื่อรองรับทั้ง iOS และ Android
-  const resultHtml = document.getElementById('result-content').innerHTML;
-  const styles = Array.from(document.querySelectorAll('style')).map(s=>s.outerHTML).join('');
-  const win = window.open('', '_blank');
-  if (!win) {
-    // fallback สำหรับบางเบราว์เซอร์ที่ block popup
-    window.print();
-    return;
-  }
-  win.document.write(`<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ผลตรวจสุขภาพ — โรงพยาบาลบึงกาฬ</title>
-${styles}
-<style>
-  body{background:#f4f8f9;padding:16px;font-family:'Noto Sans Thai',sans-serif}
-  .btn{display:none!important}
-  .sec-body{display:block!important}
-  @media print{body{background:#fff;padding:0}.fu{break-inside:avoid}}
-</style>
-</head>
-<body>
-<div style="max-width:700px;margin:0 auto">
-${resultHtml}
-</div>
-<script>
-  // ซ่อนปุ่ม
-  document.querySelectorAll('.btn').forEach(b=>b.style.display='none');
+  // ซ่อนทุกอย่างยกเว้น pg-result แล้ว print
+  const allPages = document.querySelectorAll('.page');
+  const nav = document.querySelector('.top-nav');
+  const footer = document.querySelector('footer');
+  const btns = document.querySelectorAll('#result-content .btn');
+  
+  // ซ่อน
+  allPages.forEach(p=>{ if(p.id!=='pg-result') p.style.display='none'; });
+  if(nav) nav.style.display='none';
+  if(footer) footer.style.display='none';
+  btns.forEach(b=>b.style.display='none');
+  
   // เปิด section ทั้งหมด
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
-  setTimeout(()=>{ window.print(); }, 600);
-<\/script>
-</body>
-</html>`);
-  win.document.close();
+  
+  window.print();
+  
+  // คืนค่าเดิมหลัง print
+  setTimeout(()=>{
+    allPages.forEach(p=>{ p.style.display=''; });
+    if(nav) nav.style.display='';
+    if(footer) footer.style.display='';
+    btns.forEach(b=>b.style.display='');
+    // restore active page
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pg-result').classList.add('active');
+  }, 1000);
 }
 
 function togSec(h){ const b=h.nextElementSibling,c=h.querySelector('.sec-chev'),o=b.style.display!=='none'; b.style.display=o?'none':'block'; c.classList.toggle('open',!o); }
