@@ -1028,7 +1028,7 @@ function onSelPatient() {
   document.getElementById('att-note').value=p&&p.doctor_note||'';
   labBase64s=[]; labFiles_=[];
   document.getElementById('lab-thumbs').innerHTML='';
-  document.getElementById('ai-tbl-wrap').style.display='none';
+  renderAITable([]);  // แสดงตารางกรอกผลทันที
   document.getElementById('btn-ai').style.display='none';
 }
 
@@ -1097,29 +1097,67 @@ keys: FBS HbA1c Chol LDL HDL TG Hb WBC Plt AST ALT Cr UA
   btn.disabled=false; btn.innerHTML='✨ อ่านภาพอีกครั้ง';
 }
 
+// หมวดหมู่สำหรับตารางกรอกผล
+const LAB_GROUPS = [
+  { title:'🩸 ความสมบูรณ์ของเลือด', keys:['Hct_M','Hct_F'] },
+  { title:'💊 น้ำตาลในเลือด',        keys:['FBS'] },
+  { title:'💛 ไขมันในเลือด',         keys:['Chol','TG','HDL_M','HDL_F','LDL'] },
+  { title:'🫀 การทำงานของตับ',        keys:['AST','ALT','ALP'] },
+  { title:'💉 การทำงานของไต',         keys:['Cr_M','Cr_F','GFR'] },
+  { title:'🔬 กรดยูริก',             keys:['UA_M','UA_F'] },
+  { title:'💓 ความดันโลหิต',          keys:['SBP','DBP'] },
+  { title:'⚖️ BMI และรอบเอว',        keys:['BMI','Waist_M','Waist_F'] },
+];
+
+function getPatientGender() {
+  const pid = document.getElementById('attach-sel')?.value;
+  if (!pid) return 'both';
+  const p = allPatients.find(x=>x.pid===pid);
+  if (!p) return 'both';
+  const name = p.name || '';
+  if (name.startsWith('นาย') || name.startsWith('เด็กชาย')) return 'male';
+  if (name.startsWith('นาง') || name.startsWith('นางสาว') || name.startsWith('เด็กหญิง')) return 'female';
+  return 'both';
+}
+
 function renderAITable(items) {
   const map={}; items.forEach(it=>map[it.key]=it.value);
   const tb=document.getElementById('ai-tbody'); tb.innerHTML='';
-  Object.entries(REF).forEach(([k,r])=>{
-    const v=map[k]||'';
-    const tier=getTier(parseFloat(v),r);
-    const refDesc = r.tiers.map(t=>{
-      const lo = t.minVal!==undefined ? `${t.minVal}–` : (t===r.tiers[0]?'< ':'');
-      const hi = t.max===9999 ? '↑' : t.max;
-      return `${t.label}: ${lo}${hi}`;
-    }).join(' | ');
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${r.label}<div style="font-size:.67rem;color:var(--txt-l)">${r.gender!=='both'?'('+r.gender+')'  :''}</div></td>
-      <td style="font-weight:600;color:${v?'var(--teal)':'var(--txt-l)'}">${v||'—'}</td>
-      <td><input type="number" class="val-inp" id="lv-${k}" value="${v}" step="0.1"
-        onchange="updateFlagCell('${k}',this.value)"></td>
-      <td style="font-size:.72rem;color:var(--txt-l)">${r.unit}</td>
-      <td style="font-size:.68rem;color:var(--txt-l);max-width:120px;line-height:1.4">${refDesc}</td>
-      <td id="fc-${k}">${fHtml(tier.cls==='ok'?'ok':tier.cls==='warn'?'lo':'hi', tier.label)}</td>`;
-    tb.appendChild(tr);
+  const gender = getPatientGender();
+  LAB_GROUPS.forEach(group=>{
+    const visibleKeys = group.keys.filter(k=>{
+      const r=REF[k]; if(!r) return false;
+      if (r.gender==='both') return true;
+      if (gender==='both') return true;
+      return r.gender===gender;
+    });
+    if (!visibleKeys.length) return;
+    const hdr=document.createElement('tr');
+    hdr.innerHTML=`<td colspan="6" style="background:var(--teal-p);color:var(--teal);font-weight:700;font-size:.82rem;padding:7px 10px;border-top:2px solid var(--teal-l)">${group.title}</td>`;
+    tb.appendChild(hdr);
+    visibleKeys.forEach(k=>{
+      const r=REF[k];
+      const v=map[k]||'';
+      const tier=getTier(parseFloat(v),r);
+      const refDesc = r.tiers.map(t=>{
+        const lo = t.minVal!==undefined ? `${t.minVal}–` : (t===r.tiers[0]?'< ':'');
+        const hi = t.max===9999 ? '↑' : t.max;
+        return `${t.label}: ${lo}${hi}`;
+      }).join(' | ');
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${r.label}</td>
+        <td style="font-weight:600;color:${v?'var(--teal)':'var(--txt-l)'}">${v||'—'}</td>
+        <td><input type="number" class="val-inp" id="lv-${k}" value="${v}" step="0.1"
+          onchange="updateFlagCell('${k}',this.value)"></td>
+        <td style="font-size:.72rem;color:var(--txt-l)">${r.unit}</td>
+        <td style="font-size:.68rem;color:var(--txt-l);max-width:120px;line-height:1.4">${refDesc}</td>
+        <td id="fc-${k}">${fHtml(tier.cls==='ok'?'ok':tier.cls==='warn'?'lo':'hi', tier.label)}</td>`;
+      tb.appendChild(tr);
+    });
   });
   document.getElementById('ai-tbl-wrap').style.display='block';
 }
+
 
 function updateFlagCell(k,v){
   const r=REF[k]; if(!r) return;
@@ -1153,6 +1191,9 @@ async function saveAttach() {
     const res=await api('attachResult', payload);
     hideOverlay();
     if (res.ok) {
+      // อัปเดต local allPatients ทันที ไม่ต้องรอ loadAll
+      const idx = allPatients.findIndex(x=>x.pid===pid);
+      if (idx>=0) { allPatients[idx].hasResult=true; allPatients[idx].labData=labData; allPatients[idx].doctor_note=note; }
       await loadAll();
       alert('✅ บันทึกผลเรียบร้อยค่ะ!\nผู้รับบริการสแกน QR เดิมแล้วดูผลได้ทันทีค่ะ');
       goPage('pg-list');
