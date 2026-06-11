@@ -1359,21 +1359,29 @@ function saveResultImage() {
   if (btnEl) btnEl.style.display='none';
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
 
-  html2canvas(el, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#f4f8f9',
-    width: el.offsetWidth,
-    height: el.scrollHeight,
-    scrollY: -window.scrollY
-  }).then(canvas => {
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    showImageModal(dataUrl);
-    if (btnEl) btnEl.style.display='flex';
-  }).catch(e => {
-    if (btnEl) btnEl.style.display='flex';
-    alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
-  });
+  // scroll ไปบนสุดก่อน capture เพื่อให้ได้ภาพครบ
+  const origScroll = window.scrollY;
+  window.scrollTo(0, 0);
+  setTimeout(() => {
+    html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f4f8f9',
+      width: el.offsetWidth,
+      height: el.scrollHeight,
+      scrollY: 0,
+      windowHeight: el.scrollHeight
+    }).then(canvas => {
+      window.scrollTo(0, origScroll);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      showImageModal(dataUrl);
+      if (btnEl) btnEl.style.display='flex';
+    }).catch(e => {
+      window.scrollTo(0, origScroll);
+      if (btnEl) btnEl.style.display='flex';
+      alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
+    });
+  }, 300);
 }
 
 
