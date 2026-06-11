@@ -293,7 +293,7 @@ tbody tr:last-child td{border:none}
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>#</th><th>เลขบัตร</th><th>ชื่อ-สกุล</th><th>วันเกิด</th><th>ลงทะเบียน</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+        <thead><tr><th>#</th><th>เลขบัตร</th><th>ชื่อ-สกุล</th><th>อายุ</th><th>เบอร์โทร</th><th>โรคประจำตัว</th><th>ลงทะเบียน</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
         <tbody id="list-tbody"></tbody>
       </table>
       <div class="empty" id="list-empty">ยังไม่มีข้อมูล กรุณากด รีเฟรช ค่ะ</div>
@@ -382,8 +382,8 @@ tbody tr:last-child td{border:none}
       <div class="fg"><label>นามสกุล <span class="req">*</span></label><input type="text" id="reg-lname" placeholder="นามสกุล"></div>
     </div>
     <div class="grid2">
-      <div class="fg"><label>วันเดือนปีเกิด <span class="req">*</span></label>
-        <input type="text" id="reg-dob" placeholder="วว/ดด/ปปปป"></div>
+      <div class="fg"><label>อายุ (ปี) <span class="req">*</span></label>
+        <input type="number" id="reg-dob" placeholder="เช่น 45" min="1" max="120" inputmode="numeric"></div>
       <div class="fg"><label>เบอร์โทร</label><input type="tel" id="reg-phone" placeholder="08x-xxx-xxxx"></div>
     </div>
     <div class="fg"><label>โรคประจำตัว / ยาที่ใช้ประจำ</label>
@@ -780,7 +780,8 @@ function doRegister() {
   const cong  = document.getElementById('reg-cong').value.trim();
 
   if (!fname||!lname) { alert('กรุณากรอกชื่อและนามสกุลค่ะ'); return; }
-  if (!dob) { alert('กรุณากรอกวันเดือนปีเกิดค่ะ'); return; }
+  if (!dob) { alert('กรุณากรอกอายุค่ะ'); return; }
+  if (isNaN(dob) || parseInt(dob) < 1 || parseInt(dob) > 120) { alert('กรุณากรอกอายุให้ถูกต้องค่ะ (1-120 ปี)'); return; }
 
   pendingReg = {
     pid, name: pre+' '+fname+' '+lname,
@@ -793,7 +794,7 @@ function doRegister() {
       <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.85rem">
         <span style="color:var(--txt-l)">เลขบัตร</span><b>${pid}</b>
         <span style="color:var(--txt-l)">ชื่อ-สกุล</span><b>${pre} ${fname} ${lname}</b>
-        <span style="color:var(--txt-l)">วันเกิด</span><b>${dob}</b>
+        <span style="color:var(--txt-l)">อายุ</span><b>${dob} ปี</b>
         ${phone?`<span style="color:var(--txt-l)">โทร</span><b>${phone}</b>`:''}
         ${cong?`<span style="color:var(--txt-l)">โรคประจำตัว</span><b>${cong}</b>`:''}
       </div>
@@ -874,7 +875,12 @@ function renderList(list) {
       : '<span class="badge bd">✅ ปกติ</span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${i+1}</td><td style="font-size:.77rem">${p.pid}</td>
-      <td>${p.name||'—'}</td><td>${fmtDate(p.dob)}</td><td>${fmtDate(p.regDate)}</td><td>${st}</td>
+      <td>${p.name||'—'}</td>
+      <td>${p.dob||'—'}</td>
+      <td>${p.phone||'—'}</td>
+      <td style="font-size:.75rem;max-width:120px">${p.congenital||'—'}</td>
+      <td>${fmtDate(p.regDate)}</td>
+      <td>${st}</td>
       <td style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem" onclick="quickAttach('${p.pid}')">📎 แนบผล</button>
         ${p.hasResult?`<button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem" onclick="adminView('${p.pid}')">👁️ ดูผล</button>`:''}
@@ -1115,7 +1121,10 @@ function renderResult(p) {
       <div style="flex:1">
         <div class="result-name">${p.name}</div>
         <div class="result-meta">
-          <span>บัตร: ${p.pid}</span><span>วันเกิด: ${p.dob}</span><span>วันตรวจ: ${p.resultDate||'—'}</span>
+          <span>บัตร: ${p.pid}</span>
+          <span>อายุ: ${p.dob||'—'} ปี</span>
+          <span>โทร: ${p.phone||'—'}</span>
+          <span>วันตรวจ: ${p.resultDate||'—'}</span>
         </div>
       </div>
     </div>
