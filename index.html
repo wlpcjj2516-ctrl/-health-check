@@ -1347,9 +1347,7 @@ function saveResultImage() {
   const previewWrap = document.getElementById('img-preview-wrap');
   const previewImg = document.getElementById('img-preview');
   if (btnEl) btnEl.style.display='none';
-  // เปิด section ทั้งหมด
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
-  // ซ่อน preview wrap ขณะ capture
   if (previewWrap) previewWrap.style.display='none';
 
   html2canvas(el, {
@@ -1361,11 +1359,18 @@ function saveResultImage() {
     scrollY: -window.scrollY
   }).then(canvas => {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    // แสดงภาพให้กดค้างบันทึก
-    if (previewImg) previewImg.src = dataUrl;
-    if (previewWrap) previewWrap.style.display='block';
-    // scroll ไปที่ภาพ
-    setTimeout(()=>{ if(previewWrap) previewWrap.scrollIntoView({behavior:'smooth'}); }, 100);
+    // เปิดภาพใน tab ใหม่ — Safari/iOS รองรับการกดค้างบันทึกจากวิธีนี้
+    const newTab = window.open();
+    if (newTab) {
+      newTab.document.write('<html><head><title>ผลตรวจสุขภาพ</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#000;display:flex;justify-content:center;align-items:flex-start;min-height:100vh"><img src="'+dataUrl+'" style="width:100%;max-width:700px" /><p style="position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:#fff;text-align:center;padding:12px;font-size:14px;font-family:sans-serif">📌 กดค้างที่ภาพ แล้วเลือก "บันทึกภาพ" ค่ะ</p></body></html>');
+      newTab.document.close();
+    } else {
+      // fallback แสดงใน preview
+      if (previewImg) previewImg.src = dataUrl;
+      if (previewWrap) previewWrap.style.display='block';
+      setTimeout(()=>{ if(previewWrap) previewWrap.scrollIntoView({behavior:'smooth'}); }, 100);
+    }
+    if (btnEl) btnEl.style.display='flex';
   }).catch(e => {
     if (btnEl) btnEl.style.display='flex';
     alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
