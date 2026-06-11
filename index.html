@@ -6,6 +6,7 @@
 <title>ระบบตรวจสุขภาพ — โรงพยาบาลบึงกาฬ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;600;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --teal:#0a4f5e;--teal-m:#1a7a8a;--teal-l:#2ea8b8;--teal-p:#e8f6f8;
@@ -360,8 +361,12 @@ tbody tr:last-child td{border:none}
         </table></div>
       </div>
       <div class="fg" style="margin-top:14px">
-        <label>หมายเหตุจากแพทย์ (ถ้ามี)</label>
-        <textarea id="att-note" placeholder="เช่น พบน้ำตาลสูง แนะนำปรับพฤติกรรม นัดติดตาม 3 เดือน..."></textarea>
+        <label>ความเห็น / คำแนะนำของแพทย์ <span class="req">*</span></label>
+        <textarea id="att-note" rows="4" placeholder="เช่น พบน้ำตาลอยู่ในเกณฑ์ปกติ แนะนำออกกำลังกายสม่ำเสมอ ลดอาหารไขมันสูง นัดติดตาม 1 ปี..."></textarea>
+        <div class="fg" style="margin-top:10px">
+          <label>การนัดติดตาม (ถ้ามี)</label>
+          <input type="text" id="att-followup" placeholder="เช่น นัดติดตาม 3 เดือน / 6 เดือน / 1 ปี">
+        </div>
       </div>
       <button class="btn btn-primary btn-full btn-lg" onclick="saveAttach()">💾 บันทึกผลและแจ้งผู้รับบริการ</button>
     </div>
@@ -1051,6 +1056,7 @@ function onSelPatient() {
   document.getElementById('att-status').textContent=p&&p.hasResult?'✅ มีผลแล้ว':'⏳ รอผล';
   document.getElementById('att-status').className='badge '+(p&&p.hasResult?'bd':'bw');
   document.getElementById('att-note').value=p&&p.doctor_note||'';
+  const fuEl=document.getElementById('att-followup'); if(fuEl) fuEl.value=p&&p.doctor_followup||'';
   labBase64s=[]; labFiles_=[];
   document.getElementById('lab-thumbs').innerHTML='';
   renderAITable([]);  // แสดงตารางกรอกผลทันที
@@ -1210,6 +1216,7 @@ async function saveAttach() {
   try {
     const payload = {
       pid, labData, doctor_note: note,
+      doctor_followup: document.getElementById('att-followup')?.value||'',
       resultDate: new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}),
       labImagesMeta: labBase64s.map((b,i)=>({ name: labFiles_[i]?.name||'image-'+i+'.jpg', size: b.length }))
     };
@@ -1276,9 +1283,15 @@ function renderResult(p) {
         <div class="sec-chev open">▼</div>
       </div><div class="sec-body">${rows}</div></div>`;
   }).join('');
-  const noteHtml=p.doctor_note?`
-    <div class="doc-note fu"><span style="font-size:22px">👨‍⚕️</span>
-      <div><h4>หมายเหตุจากแพทย์</h4><p>${p.doctor_note}</p></div></div>`:'';
+  const noteHtml=(p.doctor_note||p.doctor_followup)?`
+    <div class="doc-note fu">
+      <span style="font-size:22px">👨‍⚕️</span>
+      <div style="flex:1">
+        <h4 style="margin-bottom:6px">ความเห็น / คำแนะนำของแพทย์</h4>
+        ${p.doctor_note?`<p style="margin-bottom:6px">${p.doctor_note}</p>`:''}
+        ${p.doctor_followup?`<p style="margin-top:4px;padding-top:6px;border-top:1px solid #e8c97a"><b>📅 การนัดติดตาม:</b> ${p.doctor_followup}</p>`:''}
+      </div>
+    </div>`:'';
   document.getElementById('result-content').innerHTML=`
     <div class="result-banner fu">
       <div class="result-avatar">👤</div>
@@ -1299,40 +1312,38 @@ function renderResult(p) {
       <div class="sum-box hi"><div style="font-size:1.1rem">🚨</div><div class="sum-n">${hiL.length}</div><div class="sum-l">สูงกว่าเกณฑ์</div></div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
-      <button class="btn btn-primary" onclick="printResultPDF()">🖨️ พิมพ์ผล / บันทึก PDF</button>
+      <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage(this)">📥 บันทึกผลเป็นภาพ</button>
     </div>
     ${secHtml}${noteHtml}`;
   goPage('pg-result');
 }
 
-function printResultPDF() {
-  // ซ่อนทุกอย่างยกเว้น pg-result แล้ว print
-  const allPages = document.querySelectorAll('.page');
-  const nav = document.querySelector('.top-nav');
-  const footer = document.querySelector('footer');
-  const btns = document.querySelectorAll('#result-content .btn');
-  
-  // ซ่อน
-  allPages.forEach(p=>{ if(p.id!=='pg-result') p.style.display='none'; });
-  if(nav) nav.style.display='none';
-  if(footer) footer.style.display='none';
-  btns.forEach(b=>b.style.display='none');
-  
+function saveResultImage(btn) {
+  const el = document.getElementById('result-content');
+  if (!el) return;
+  // ซ่อนปุ่มก่อน capture
+  const btnEl = document.getElementById('btn-save-img');
+  if (btnEl) btnEl.style.display='none';
   // เปิด section ทั้งหมด
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
   
-  window.print();
-  
-  // คืนค่าเดิมหลัง print
-  setTimeout(()=>{
-    allPages.forEach(p=>{ p.style.display=''; });
-    if(nav) nav.style.display='';
-    if(footer) footer.style.display='';
-    btns.forEach(b=>b.style.display='');
-    // restore active page
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('pg-result').classList.add('active');
-  }, 1000);
+  html2canvas(el, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#f4f8f9',
+    windowWidth: el.scrollWidth,
+    height: el.scrollHeight,
+    scrollY: 0
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'ผลตรวจสุขภาพ.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.92);
+    link.click();
+    if (btnEl) btnEl.style.display='';
+  }).catch(e => {
+    if (btnEl) btnEl.style.display='';
+    alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
+  });
 }
 
 function togSec(h){ const b=h.nextElementSibling,c=h.querySelector('.sec-chev'),o=b.style.display!=='none'; b.style.display=o?'none':'block'; c.classList.toggle('open',!o); }
