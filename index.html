@@ -617,6 +617,14 @@ const REF = {
       {max:29,  label:'ไตเสื่อมมาก', cls:'hi'},
     ]
   },
+  BUN: {
+    label:'BUN (ยูเรียไนโตรเจน)', unit:'mg/dL', gender:'both',
+    tiers:[
+      {max:20,  label:'ปกติ',        cls:'ok',   minVal:7},
+      {max:25,  label:'เริ่มสูง',    cls:'warn'},
+      {max:9999,label:'ผิดปกติ',     cls:'hi'},
+    ]
+  },
   // 7. ตับ
   AST: {
     label:'AST (SGOT)', unit:'U/L', gender:'both',
@@ -1103,7 +1111,7 @@ const LAB_GROUPS = [
   { title:'💊 น้ำตาลในเลือด',        keys:['FBS'] },
   { title:'💛 ไขมันในเลือด',         keys:['Chol','TG','HDL_M','HDL_F','LDL'] },
   { title:'🫀 การทำงานของตับ',        keys:['AST','ALT','ALP'] },
-  { title:'💉 การทำงานของไต',         keys:['Cr_M','Cr_F','GFR'] },
+  { title:'💉 การทำงานของไต',         keys:['Cr_M','Cr_F','GFR','BUN'] },
   { title:'🔬 กรดยูริก',             keys:['UA_M','UA_F'] },
   { title:'💓 ความดันโลหิต',          keys:['SBP','DBP'] },
   { title:'⚖️ BMI และรอบเอว',        keys:['BMI','Waist_M','Waist_F'] },
@@ -1217,7 +1225,7 @@ function renderResult(p) {
     {title:'ไขมันในเลือด',       ico:'💛',bg:'#fde8e8',keys:['Chol','TG','LDL','HDL_M','HDL_F']},
     {title:'ความดันโลหิต',       ico:'💓',bg:'#fde8f8',keys:['SBP','DBP']},
     {title:'การทำงานของตับ',     ico:'🫀',bg:'#f0e8f8',keys:['AST','ALT','ALP']},
-    {title:'การทำงานของไต',      ico:'💊',bg:'#e8f5ee',keys:['Cr_M','Cr_F','GFR']},
+    {title:'การทำงานของไต',      ico:'💊',bg:'#e8f5ee',keys:['Cr_M','Cr_F','GFR','BUN']},
     {title:'ความเข้มข้นเลือด',   ico:'🩸',bg:'#e8f6f8',keys:['Hct_M','Hct_F']},
     {title:'กรดยูริก',           ico:'🔬',bg:'#f5f0e8',keys:['UA_M','UA_F']},
     {title:'BMI และรอบเอว',      ico:'⚖️',bg:'#f0f8e8',keys:['BMI','Waist_M','Waist_F']},
@@ -1336,13 +1344,16 @@ function filterByDate(patients) {
   const fromVal = document.getElementById('rpt-date-from')?.value;
   const toVal   = document.getElementById('rpt-date-to')?.value;
   if (!fromVal && !toVal) return patients;
-  const from = fromVal ? new Date(fromVal) : null;
-  const to   = toVal   ? new Date(toVal + 'T23:59:59') : null;
+  // normalize to date-only integer yyyymmdd เพื่อหลีกเลี่ยงปัญหา timezone
+  const toInt = d => d ? d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() : null;
+  const fromInt = fromVal ? parseInt(fromVal.replace(/-/g,'')) : null;
+  const toInt2  = toVal   ? parseInt(toVal.replace(/-/g,''))   : null;
   return patients.filter(p => {
     const d = parseRegDate(p.regDate);
     if (!d) return true;
-    if (from && d < from) return false;
-    if (to   && d > to)   return false;
+    const di = toInt(d);
+    if (fromInt && di < fromInt) return false;
+    if (toInt2  && di > toInt2)  return false;
     return true;
   });
 }
