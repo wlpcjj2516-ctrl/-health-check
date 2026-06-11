@@ -838,7 +838,12 @@ async function loadAll() {
 
 function filterList() {
   const q = document.getElementById('sq').value.toLowerCase();
-  renderList(allPatients.filter(p=>!q||p.pid.includes(q)||p.name.toLowerCase().includes(q)));
+  renderList(allPatients.filter(p => {
+    if (!q) return true;
+    const pid  = String(p.pid  || '');
+    const name = String(p.name || '').toLowerCase();
+    return pid.includes(q) || name.includes(q);
+  }));
 }
 
 function fmtDate(str) {
