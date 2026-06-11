@@ -197,7 +197,36 @@ tbody tr:last-child td{border:none}
   .res-ref{display:none}
   .ntab{padding:14px 10px}
 }
-@media print{.top-nav,.act-bar,footer{display:none!important}body{background:#fff}.sec-body{display:block!important}}
+@media print{.top-nav,.act-bar,footer{display:none!important}body{background:#fff}.sec-body{display:block!important}
+  #report-content .btn{display:none!important}}
+
+/* REPORT */
+.rpt-header{text-align:center;padding:16px 0 20px;border-bottom:2px solid var(--teal);margin-bottom:20px}
+.rpt-header h2{font-family:'Noto Serif Thai',serif;font-size:1.2rem;font-weight:700;color:var(--teal)}
+.rpt-header p{font-size:.8rem;color:var(--txt-l);margin-top:4px}
+.rpt-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.rpt-box{border-radius:12px;padding:16px;text-align:center;border:2px solid}
+.rpt-box.total{border-color:var(--teal);background:var(--teal-p)}
+.rpt-box.ok{border-color:var(--ok);background:var(--ok-bg)}
+.rpt-box.warn{border-color:var(--warn);background:var(--warn-bg)}
+.rpt-box.hi{border-color:var(--hi);background:var(--hi-bg)}
+.rpt-box .rn{font-size:2rem;font-weight:700;line-height:1;margin:4px 0}
+.rpt-box.total .rn{color:var(--teal)}.rpt-box.ok .rn{color:var(--ok)}
+.rpt-box.warn .rn{color:var(--warn)}.rpt-box.hi .rn{color:var(--hi)}
+.rpt-box .rl{font-size:.75rem;color:var(--txt-m)}.rpt-box .rp{font-size:.7rem;color:var(--txt-l);margin-top:2px}
+.rpt-section-title{font-family:'Noto Serif Thai',serif;font-size:.95rem;font-weight:700;color:var(--teal);margin:20px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--border)}
+.rpt-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:16px}
+.rpt-table thead th{background:var(--teal);color:#fff;padding:8px 10px;text-align:left;font-weight:500}
+.rpt-table tbody td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.rpt-table tbody tr:nth-child(even){background:#f7fbfc}
+.rpt-tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.68rem;font-weight:600}
+.rpt-tag.ok{background:var(--ok-bg);color:var(--ok)}.rpt-tag.warn{background:var(--warn-bg);color:var(--warn)}
+.rpt-tag.hi{background:var(--hi-bg);color:var(--hi)}.rpt-tag.nd{background:#f0f0f0;color:#888}
+.bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-label{font-size:.75rem;color:var(--txt-m);min-width:100px}
+.bar-track{flex:1;height:14px;background:var(--border);border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:10px;transition:.5s}
+.bar-count{font-size:.72rem;color:var(--txt-l);min-width:50px;text-align:right}
 </style>
 </head>
 <body>
@@ -221,6 +250,7 @@ tbody tr:last-child td{border:none}
       <div class="ntab active" onclick="goPage('pg-qr',this)">📱 QR Code</div>
       <div class="ntab" onclick="goPage('pg-list',this);loadAll()">👥 รายชื่อ <span class="nav-badge" id="badge-n">0</span></div>
       <div class="ntab" onclick="goPage('pg-attach',this);loadAllForSelect()">📎 แนบผลแลป</div>
+      <div class="ntab" onclick="goPage('pg-report',this);buildReport()">📊 รายงานสรุป</div>
     </div>
   </div>
 </nav>
@@ -293,7 +323,7 @@ tbody tr:last-child td{border:none}
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>#</th><th>เลขบัตร</th><th>ชื่อ-สกุล</th><th>อายุ</th><th>เบอร์โทร</th><th>โรคประจำตัว</th><th>ลงทะเบียน</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+        <thead><tr><th>#</th><th>เลขบัตร</th><th>ชื่อ-สกุล</th><th>อายุ</th><th>เบอร์โทร</th><th>โรคประจำตัว</th><th>หน่วยงาน</th><th>ลงทะเบียน</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
         <tbody id="list-tbody"></tbody>
       </table>
       <div class="empty" id="list-empty">ยังไม่มีข้อมูล กรุณากด รีเฟรช ค่ะ</div>
@@ -388,6 +418,8 @@ tbody tr:last-child td{border:none}
     </div>
     <div class="fg"><label>โรคประจำตัว / ยาที่ใช้ประจำ</label>
       <textarea id="reg-cong" placeholder="เช่น เบาหวาน ความดัน..."></textarea></div>
+    <div class="fg"><label>หน่วยงาน <span class="req">*</span></label>
+      <input type="text" id="reg-dept" placeholder="เช่น งานการพยาบาล, ห้องผ่าตัด, OPD"></div>
     <button class="btn btn-primary btn-full btn-lg" onclick="doRegister()">✅ ยืนยันข้อมูล</button>
     <p style="text-align:center;font-size:.73rem;color:var(--txt-l);margin-top:12px">🔒 ข้อมูลของท่านถูกเก็บรักษาเป็นความลับ</p>
   </div>
@@ -427,6 +459,45 @@ tbody tr:last-child td{border:none}
   </div>
 </div>
 
+<!-- ════════════ ADMIN: รายงานสรุป ════════════ -->
+<div class="page" id="pg-report">
+  <div class="card" id="report-content">
+    <div class="card-title">📊 รายงานสรุปผลการตรวจสุขภาพประจำปี</div>
+
+    <!-- ตัวกรองช่วงเวลา -->
+    <div style="background:var(--teal-p);border:1.5px solid var(--teal-l);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:.82rem;font-weight:600;color:var(--teal);margin-bottom:10px">🗓️ เลือกช่วงเวลาที่ต้องการแสดงรายงาน</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fg" style="margin:0;flex:1;min-width:140px">
+          <label style="font-size:.75rem">ตั้งแต่วันที่</label>
+          <input type="date" id="rpt-date-from" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Noto Sans Thai',sans-serif;font-size:.85rem;width:100%">
+        </div>
+        <div class="fg" style="margin:0;flex:1;min-width:140px">
+          <label style="font-size:.75rem">ถึงวันที่</label>
+          <input type="date" id="rpt-date-to" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Noto Sans Thai',sans-serif;font-size:.85rem;width:100%">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="padding:9px 14px;font-size:.78rem" onclick="setDateRange('today')">วันนี้</button>
+          <button class="btn btn-ghost" style="padding:9px 14px;font-size:.78rem" onclick="setDateRange('week')">7 วัน</button>
+          <button class="btn btn-ghost" style="padding:9px 14px;font-size:.78rem" onclick="setDateRange('month')">เดือนนี้</button>
+          <button class="btn btn-ghost" style="padding:9px 14px;font-size:.78rem" onclick="setDateRange('year')">ปีนี้</button>
+          <button class="btn btn-ghost" style="padding:9px 14px;font-size:.78rem" onclick="setDateRange('all')">ทั้งหมด</button>
+          <button class="btn btn-primary" style="padding:9px 14px;font-size:.78rem" onclick="buildReport()">🔍 แสดงรายงาน</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+      <button class="btn btn-ghost" onclick="exportReportCSV()">📥 ดาวน์โหลด CSV</button>
+    </div>
+
+    <div id="report-body">
+      <div class="empty">เลือกช่วงเวลาแล้วกด "แสดงรายงาน" ค่ะ</div>
+    </div>
+  </div>
+</div>
+
 <!-- PATIENT: ผลตรวจ -->
 <div class="page" id="pg-result">
   <div id="result-content"></div>
@@ -446,6 +517,30 @@ tbody tr:last-child td{border:none}
 
 <!-- MODAL ยืนยัน -->
 <div class="modal" id="confirm-modal">
+
+<!-- MODAL แก้ไขข้อมูล -->
+<div class="modal" id="edit-modal">
+  <div class="modal-box">
+    <h3>✏️ แก้ไขข้อมูลผู้รับบริการ</h3>
+    <input type="hidden" id="edit-pid">
+    <div class="fg"><label>ชื่อ-สกุล <span class="req">*</span></label>
+      <input type="text" id="edit-name" placeholder="ชื่อ-สกุล"></div>
+    <div class="grid2">
+      <div class="fg"><label>อายุ (ปี)</label>
+        <input type="number" id="edit-dob" placeholder="เช่น 45" min="1" max="120"></div>
+      <div class="fg"><label>เบอร์โทร</label>
+        <input type="tel" id="edit-phone" placeholder="08x-xxx-xxxx"></div>
+    </div>
+    <div class="fg"><label>หน่วยงาน</label>
+      <input type="text" id="edit-dept" placeholder="เช่น งานการพยาบาล"></div>
+    <div class="fg"><label>โรคประจำตัว / ยาประจำ</label>
+      <input type="text" id="edit-cong" placeholder="เช่น เบาหวาน ความดัน"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveEdit()">💾 บันทึก</button>
+      <button class="btn btn-ghost" onclick="closeModal('edit-modal')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
   <div class="modal-box">
     <h3>✅ ยืนยันข้อมูลก่อนบันทึก</h3>
     <div id="confirm-body"></div>
@@ -655,7 +750,7 @@ function getTier(val, refItem) {
   return refItem.tiers[refItem.tiers.length - 1];
 }
 
-let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbifXrIpPuxHNT8M4q5mOj2JQ1KbDnG8SWOA6r1h_WnWR6L8WHC6Bl4wSCRP8D_Aj7/exec';
+https://script.google.com/macros/s/AKfycbzbifXrIpPuxHNT8M4q5mOj2JQ1KbDnG8SWOA6r1h_WnWR6L8WHC6Bl4wSCRP8D_Aj7/exec
 let APP_URL    = 'https://wlpcjj2516-ctrl.github.io/-health-check/';
 let allPatients = [];
 let labBase64s  = [];
@@ -778,14 +873,16 @@ function doRegister() {
   const dob   = document.getElementById('reg-dob').value.trim();
   const phone = document.getElementById('reg-phone').value.trim();
   const cong  = document.getElementById('reg-cong').value.trim();
+  const dept  = document.getElementById('reg-dept').value.trim();
 
   if (!fname||!lname) { alert('กรุณากรอกชื่อและนามสกุลค่ะ'); return; }
   if (!dob) { alert('กรุณากรอกอายุค่ะ'); return; }
   if (isNaN(dob) || parseInt(dob) < 1 || parseInt(dob) > 120) { alert('กรุณากรอกอายุให้ถูกต้องค่ะ (1-120 ปี)'); return; }
+  if (!dept) { alert('กรุณากรอกหน่วยงานค่ะ'); return; }
 
   pendingReg = {
     pid, name: pre+' '+fname+' '+lname,
-    dob, phone, congenital: cong,
+    dob, phone, congenital: cong, department: dept,
     regDate: new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}),
   };
 
@@ -795,6 +892,7 @@ function doRegister() {
         <span style="color:var(--txt-l)">เลขบัตร</span><b>${pid}</b>
         <span style="color:var(--txt-l)">ชื่อ-สกุล</span><b>${pre} ${fname} ${lname}</b>
         <span style="color:var(--txt-l)">อายุ</span><b>${dob} ปี</b>
+        <span style="color:var(--txt-l)">หน่วยงาน</span><b>${dept}</b>
         ${phone?`<span style="color:var(--txt-l)">โทร</span><b>${phone}</b>`:''}
         ${cong?`<span style="color:var(--txt-l)">โรคประจำตัว</span><b>${cong}</b>`:''}
       </div>
@@ -846,14 +944,16 @@ function filterList() {
   }));
 }
 
-function fmtDate(str) {
-  if (!str) return '—';
-  // ISO format เช่น 2516-01-08T17:00:00.000Z หรือ 2024-01-08
-  if (str.includes('T') || (str.includes('-') && str.length >= 10)) {
+function fmtAge(val) {
+  if (!val) return '—';
+  const s = String(val).trim();
+  // ถ้าเป็นตัวเลขอายุ (น้อยกว่า 150) แสดงตรงๆ
+  if (/^\d+$/.test(s) && parseInt(s) < 150) return s + ' ปี';
+  // ถ้าเป็น ISO date format แปลงเป็นปี พ.ศ.
+  if (s.includes('T') || (s.includes('-') && s.length >= 10)) {
     try {
-      const d = new Date(str);
+      const d = new Date(s);
       if (!isNaN(d)) {
-        // แปลงปี ค.ศ. เป็น พ.ศ.
         const day   = String(d.getDate()).padStart(2,'0');
         const month = String(d.getMonth()+1).padStart(2,'0');
         const year  = d.getFullYear() < 2400 ? d.getFullYear()+543 : d.getFullYear();
@@ -861,7 +961,7 @@ function fmtDate(str) {
       }
     } catch(e) {}
   }
-  return str; // ถ้าเป็น dd/mm/yyyy อยู่แล้ว คืนค่าเดิม
+  return s;
 }
 
 function renderList(list) {
@@ -881,14 +981,17 @@ function renderList(list) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${i+1}</td><td style="font-size:.77rem">${p.pid}</td>
       <td>${p.name||'—'}</td>
-      <td>${p.dob||'—'}</td>
+      <td>${fmtAge(p.dob)}</td>
       <td>${p.phone||'—'}</td>
-      <td style="font-size:.75rem;max-width:120px">${p.congenital||'—'}</td>
+      <td style="font-size:.75rem;max-width:100px">${p.congenital||'—'}</td>
+      <td style="font-size:.75rem;max-width:100px">${p.department||'—'}</td>
       <td>${fmtDate(p.regDate)}</td>
       <td>${st}</td>
       <td style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem" onclick="quickAttach('${p.pid}')">📎 แนบผล</button>
         ${p.hasResult?`<button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem" onclick="adminView('${p.pid}')">👁️ ดูผล</button>`:''}
+        <button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem;color:var(--teal)" onclick="editPatient('${p.pid}')">✏️ แก้ไข</button>
+        <button class="btn btn-ghost" style="padding:5px 9px;font-size:.7rem;color:var(--hi)" onclick="deletePatient('${p.pid}','${p.name}')">🗑️ ลบ</button>
       </td>`;
     tb.appendChild(tr);
   });
@@ -1161,7 +1264,374 @@ async function api(action, data) {
   return res.json();
 }
 
-function getFlag(v, refItem) {
+// ══════════════════════════════════
+// REPORT
+// ══════════════════════════════════
+function setDateRange(type) {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const from = document.getElementById('rpt-date-from');
+  const to   = document.getElementById('rpt-date-to');
+  if (type === 'today') {
+    from.value = fmt(now); to.value = fmt(now);
+  } else if (type === 'week') {
+    const w = new Date(now); w.setDate(now.getDate()-6);
+    from.value = fmt(w); to.value = fmt(now);
+  } else if (type === 'month') {
+    from.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+    to.value = fmt(now);
+  } else if (type === 'year') {
+    from.value = `${now.getFullYear()}-01-01`;
+    to.value = fmt(now);
+  } else {
+    from.value = ''; to.value = '';
+  }
+}
+
+function parseRegDate(str) {
+  if (!str) return null;
+  // dd/mm/yyyy (พ.ศ.) → Date
+  if (str.includes('/')) {
+    const [d,m,y] = str.split('/');
+    const yr = parseInt(y) > 2400 ? parseInt(y)-543 : parseInt(y);
+    return new Date(yr, parseInt(m)-1, parseInt(d));
+  }
+  // ISO
+  try { return new Date(str); } catch { return null; }
+}
+
+function filterByDate(patients) {
+  const fromVal = document.getElementById('rpt-date-from')?.value;
+  const toVal   = document.getElementById('rpt-date-to')?.value;
+  if (!fromVal && !toVal) return patients;
+  const from = fromVal ? new Date(fromVal) : null;
+  const to   = toVal   ? new Date(toVal + 'T23:59:59') : null;
+  return patients.filter(p => {
+    const d = parseRegDate(p.regDate);
+    if (!d) return true;
+    if (from && d < from) return false;
+    if (to   && d > to)   return false;
+    return true;
+  });
+}
+
+function classifyPatient(p) {
+  if (!p.hasResult) return 'nd';
+  const flags = getFlags(p.labData || {});
+  if (flags.some(f => f.flag === 'hi'))  return 'hi';
+  if (flags.some(f => f.flag === 'lo'))  return 'warn';
+  return 'ok';
+}
+
+function pctStr(n, total) {
+  if (!total) return '0 ราย (0%)';
+  return `${n} ราย (${Math.round(n/total*100)}%)`;
+}
+
+function buildReport() {
+  if (!allPatients.length) {
+    showOverlay('กำลังโหลดข้อมูล...');
+    loadAll().then(() => { hideOverlay(); _buildReport(); });
+  } else {
+    _buildReport();
+  }
+}
+
+function _buildReport() {
+  const filtered = filterByDate(allPatients);
+  const total    = filtered.length;
+  const withResult = filtered.filter(p => p.hasResult);
+  const okList   = filtered.filter(p => classifyPatient(p) === 'ok');
+  const warnList = filtered.filter(p => classifyPatient(p) === 'warn');
+  const hiList   = filtered.filter(p => classifyPatient(p) === 'hi');
+  const ndList   = filtered.filter(p => classifyPatient(p) === 'nd');
+
+  const fromVal = document.getElementById('rpt-date-from')?.value;
+  const toVal   = document.getElementById('rpt-date-to')?.value;
+  const periodTxt = (fromVal||toVal)
+    ? `ช่วงวันที่ ${fromVal||'—'} ถึง ${toVal||'—'}`
+    : 'ข้อมูลทั้งหมด';
+
+  const pct = n => total ? Math.round(n/total*100) : 0;
+
+  // รายการผิดปกติพบบ่อย
+  const labCount = {};
+  withResult.forEach(p => {
+    Object.keys(REF).forEach(k => {
+      const v = parseFloat((p.labData||{})[k]);
+      const f = getFlag(v, REF[k]);
+      if (f === 'hi' || f === 'lo') labCount[k] = (labCount[k]||0)+1;
+    });
+  });
+  const labSorted = Object.entries(labCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  // แยกตามหน่วยงาน
+  const deptMap = {};
+  filtered.forEach(p => {
+    const d = p.department || 'ไม่ระบุหน่วยงาน';
+    if (!deptMap[d]) deptMap[d] = {total:0,ok:0,warn:0,hi:0,nd:0};
+    deptMap[d].total++;
+    deptMap[d][classifyPatient(p)]++;
+  });
+
+  const today = new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'long',year:'numeric'});
+
+  if (!total) {
+    document.getElementById('report-body').innerHTML = `<div class="empty">ไม่พบข้อมูลในช่วงเวลาที่เลือกค่ะ</div>`;
+    return;
+  }
+
+  document.getElementById('report-body').innerHTML = `
+    <div class="rpt-header">
+      <h2>รายงานสรุปผลการตรวจสุขภาพประจำปี</h2>
+      <p>โรงพยาบาลบึงกาฬ · วันที่พิมพ์: ${today}</p>
+      <p style="font-weight:600;color:var(--teal)">${periodTxt}</p>
+    </div>
+
+    <!-- 1. ภาพรวม -->
+    <div class="rpt-section-title">1. สรุปภาพรวม</div>
+    <div class="rpt-summary">
+      <div class="rpt-box total">
+        <div style="font-size:1.3rem">👥</div>
+        <div class="rn">${total}</div>
+        <div class="rl">ผู้รับบริการทั้งหมด</div>
+        <div class="rp">ผลออกแล้ว ${withResult.length} ราย</div>
+      </div>
+      <div class="rpt-box ok">
+        <div style="font-size:1.3rem">✅</div>
+        <div class="rn">${okList.length}</div>
+        <div class="rl">ปกติ</div>
+        <div class="rp">${pct(okList.length)}% ของทั้งหมด</div>
+      </div>
+      <div class="rpt-box warn">
+        <div style="font-size:1.3rem">⚠️</div>
+        <div class="rn">${warnList.length}</div>
+        <div class="rl">เสี่ยง / ควรระวัง</div>
+        <div class="rp">${pct(warnList.length)}% ของทั้งหมด</div>
+      </div>
+      <div class="rpt-box hi">
+        <div style="font-size:1.3rem">🚨</div>
+        <div class="rn">${hiList.length}</div>
+        <div class="rl">ผิดปกติ / พบแพทย์</div>
+        <div class="rp">${pct(hiList.length)}% ของทั้งหมด</div>
+      </div>
+    </div>
+
+    <!-- ตารางสรุปตัวเลข -->
+    <div class="tbl-wrap" style="margin-bottom:20px">
+      <table class="rpt-table">
+        <thead><tr><th>กลุ่มผลการตรวจ</th><th>จำนวน (ราย)</th><th>ร้อยละ (%)</th><th>หมายเหตุ</th></tr></thead>
+        <tbody>
+          <tr><td>✅ ปกติ</td><td><b>${okList.length}</b></td><td>${pct(okList.length)}%</td><td>ผลตรวจทุกรายการอยู่ในเกณฑ์ปกติ</td></tr>
+          <tr><td>⚠️ เสี่ยง / ควรระวัง</td><td><b>${warnList.length}</b></td><td>${pct(warnList.length)}%</td><td>มีค่าบางรายการต่ำกว่าเกณฑ์</td></tr>
+          <tr><td>🚨 ผิดปกติ / พบแพทย์</td><td><b>${hiList.length}</b></td><td>${pct(hiList.length)}%</td><td>มีค่าสูงกว่าเกณฑ์ ควรพบแพทย์</td></tr>
+          <tr><td>⏳ รอผลตรวจ</td><td><b>${ndList.length}</b></td><td>${pct(ndList.length)}%</td><td>ยังไม่มีผลตรวจ</td></tr>
+          <tr style="font-weight:700;background:var(--teal-p)"><td>รวมทั้งหมด</td><td>${total}</td><td>100%</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 2. กราฟแท่ง -->
+    <div class="rpt-section-title">2. สัดส่วนผลการตรวจ</div>
+    <div style="background:var(--surface);border-radius:12px;padding:16px 20px;margin-bottom:20px">
+      ${[
+        {label:'✅ ปกติ',         n:okList.length,   color:'var(--ok)'},
+        {label:'⚠️ เสี่ยง',      n:warnList.length, color:'var(--warn)'},
+        {label:'🚨 ผิดปกติ',     n:hiList.length,   color:'var(--hi)'},
+        {label:'⏳ รอผล',        n:ndList.length,   color:'var(--border)'},
+      ].map(b=>`
+        <div class="bar-wrap">
+          <div class="bar-label">${b.label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct(b.n)}%;background:${b.color}"></div></div>
+          <div class="bar-count">${b.n} ราย &nbsp; <b>${pct(b.n)}%</b></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3. รายการพบผิดปกติบ่อย -->
+    ${labSorted.length ? `
+    <div class="rpt-section-title">3. รายการตรวจที่พบผิดปกติบ่อย (จาก ${withResult.length} รายที่มีผล)</div>
+    <div class="tbl-wrap" style="margin-bottom:20px">
+      <table class="rpt-table">
+        <thead><tr><th>รายการตรวจ</th><th>จำนวนที่ผิดปกติ (ราย)</th><th>ร้อยละจากผู้มีผล (%)</th></tr></thead>
+        <tbody>
+          ${labSorted.map(([k,n])=>`
+            <tr>
+              <td>${REF[k]?.label||k} <span style="font-size:.72rem;color:var(--txt-l)">(${REF[k]?.unit||''})</span></td>
+              <td><b>${n}</b></td>
+              <td>${withResult.length?Math.round(n/withResult.length*100):0}%</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:16px 20px;margin-bottom:20px">
+      ${labSorted.map(([k,n])=>`
+        <div class="bar-wrap">
+          <div class="bar-label" style="font-size:.72rem">${REF[k]?.label||k}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${withResult.length?Math.round(n/withResult.length*100):0}%;background:var(--hi)"></div></div>
+          <div class="bar-count">${n} ราย &nbsp; <b>${withResult.length?Math.round(n/withResult.length*100):0}%</b></div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- 4. แยกตามหน่วยงาน -->
+    ${Object.keys(deptMap).length > 0 ? `
+    <div class="rpt-section-title">4. สรุปแยกตามหน่วยงาน</div>
+    <div class="tbl-wrap" style="margin-bottom:20px">
+      <table class="rpt-table">
+        <thead><tr>
+          <th>หน่วยงาน</th><th>ทั้งหมด</th>
+          <th>ปกติ (ราย/%)</th><th>เสี่ยง (ราย/%)</th>
+          <th>ผิดปกติ (ราย/%)</th><th>รอผล (ราย/%)</th>
+        </tr></thead>
+        <tbody>
+          ${Object.entries(deptMap).sort((a,b)=>b[1].total-a[1].total).map(([d,v])=>`
+            <tr>
+              <td><b>${d}</b></td>
+              <td>${v.total}</td>
+              <td><span class="rpt-tag ok">${v.ok} ราย</span> <span style="font-size:.7rem">${v.total?Math.round(v.ok/v.total*100):0}%</span></td>
+              <td><span class="rpt-tag warn">${v.warn} ราย</span> <span style="font-size:.7rem">${v.total?Math.round(v.warn/v.total*100):0}%</span></td>
+              <td><span class="rpt-tag hi">${v.hi} ราย</span> <span style="font-size:.7rem">${v.total?Math.round(v.hi/v.total*100):0}%</span></td>
+              <td><span class="rpt-tag nd">${v.nd} ราย</span> <span style="font-size:.7rem">${v.total?Math.round(v.nd/v.total*100):0}%</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    <!-- 5. รายชื่อต้องติดตาม -->
+    <div class="rpt-section-title">5. รายชื่อที่ต้องติดตาม (ผิดปกติ + เสี่ยง) — ${hiList.length+warnList.length} ราย</div>
+    <div class="tbl-wrap" style="margin-bottom:20px">
+      <table class="rpt-table">
+        <thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>อายุ</th><th>หน่วยงาน</th><th>ผลสรุป</th><th>รายการผิดปกติ</th></tr></thead>
+        <tbody>
+          ${[...hiList,...warnList].map((p,i) => {
+            const flags = getFlags(p.labData||{});
+            const abn = flags.filter(f=>f.flag==='hi'||f.flag==='lo').map(f=>REF[f.key]?.label||f.key).join(', ');
+            const cls = classifyPatient(p);
+            return `<tr>
+              <td>${i+1}</td><td><b>${p.name||'—'}</b></td>
+              <td>${fmtAge(p.dob)}</td><td>${p.department||'—'}</td>
+              <td><span class="rpt-tag ${cls}">${cls==='hi'?'🚨 ผิดปกติ':'⚠️ เสี่ยง'}</span></td>
+              <td style="font-size:.74rem">${abn||'—'}</td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--txt-l)">ไม่พบรายการ</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 6. รายชื่อทั้งหมด -->
+    <div class="rpt-section-title">6. รายชื่อผู้รับบริการทั้งหมด — ${total} ราย</div>
+    <div class="tbl-wrap">
+      <table class="rpt-table">
+        <thead><tr><th>#</th><th>เลขบัตร</th><th>ชื่อ-สกุล</th><th>อายุ</th><th>หน่วยงาน</th><th>วันลงทะเบียน</th><th>ผลสรุป</th></tr></thead>
+        <tbody>
+          ${filtered.map((p,i) => {
+            const cls = classifyPatient(p);
+            const tagMap = {ok:'✅ ปกติ',warn:'⚠️ เสี่ยง',hi:'🚨 ผิดปกติ',nd:'⏳ รอผล'};
+            return `<tr>
+              <td>${i+1}</td><td style="font-size:.74rem">${p.pid}</td>
+              <td>${p.name||'—'}</td><td>${fmtAge(p.dob)}</td>
+              <td>${p.department||'—'}</td><td>${fmtDate(p.regDate)}</td>
+              <td><span class="rpt-tag ${cls==='nd'?'nd':cls}">${tagMap[cls]||'—'}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function exportReportCSV() {
+  const filtered = filterByDate(allPatients);
+  if (!filtered.length) { alert('ไม่มีข้อมูลในช่วงเวลาที่เลือกค่ะ'); return; }
+  const headers = ['เลขบัตร','ชื่อ-สกุล','อายุ','หน่วยงาน','โทรศัพท์','โรคประจำตัว','วันลงทะเบียน','สถานะผล','ผลสรุป','ร้อยละ','รายการผิดปกติ'];
+  const total = filtered.length;
+  const rows = filtered.map(p => {
+    const cls = classifyPatient(p);
+    const tagMap = {ok:'ปกติ',warn:'เสี่ยง',hi:'ผิดปกติ/พบแพทย์',nd:'รอผล'};
+    const flags = getFlags(p.labData||{});
+    const abn = flags.filter(f=>f.flag==='hi'||f.flag==='lo').map(f=>REF[f.key]?.label||f.key).join('; ');
+    return [
+      p.pid, p.name||'', p.dob||'', p.department||'', p.phone||'',
+      p.congenital||'', fmtDate(p.regDate),
+      p.hasResult?'ผลออกแล้ว':'รอผล',
+      tagMap[cls]||'—', '',  abn
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  // summary rows
+  const withResult = filtered.filter(p=>p.hasResult).length;
+  const okN  = filtered.filter(p=>classifyPatient(p)==='ok').length;
+  const wN   = filtered.filter(p=>classifyPatient(p)==='warn').length;
+  const hiN  = filtered.filter(p=>classifyPatient(p)==='hi').length;
+  const ndN  = filtered.filter(p=>classifyPatient(p)==='nd').length;
+  const summary = [
+    '',
+    `"สรุปภาพรวม"`,
+    `"ผู้รับบริการทั้งหมด","${total} ราย"`,
+    `"ผลออกแล้ว","${withResult} ราย","${total?Math.round(withResult/total*100):0}%"`,
+    `"ปกติ","${okN} ราย","${total?Math.round(okN/total*100):0}%"`,
+    `"เสี่ยง","${wN} ราย","${total?Math.round(wN/total*100):0}%"`,
+    `"ผิดปกติ","${hiN} ราย","${total?Math.round(hiN/total*100):0}%"`,
+    `"รอผล","${ndN} ราย","${total?Math.round(ndN/total*100):0}%"`,
+  ];
+  const csv = '\ufeff' + ['','รายละเอียดรายบุคคล',headers.join(','), ...rows, ...summary].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `รายงานสรุปตรวจสุขภาพ_${new Date().toLocaleDateString('th-TH').replace(/\//g,'-')}.csv`;
+  a.click();
+}
+async function deletePatient(pid, name) {
+  if (!confirm(`ต้องการลบข้อมูลของ ${name} ใช่ไหมคะ?\n\nการลบนี้ไม่สามารถเรียกคืนได้ค่ะ`)) return;
+  showOverlay('กำลังลบข้อมูล...');
+  try {
+    const res = await api('deletePatient', { pid });
+    hideOverlay();
+    if (res.ok) {
+      alert('✅ ลบข้อมูลเรียบร้อยแล้วค่ะ');
+      await loadAll();
+    } else {
+      alert('เกิดข้อผิดพลาด: ' + (res.error||'unknown'));
+    }
+  } catch(e) { hideOverlay(); alert('เกิดข้อผิดพลาด: ' + e.message); }
+}
+
+// ══════════════════════════════════
+// EDIT PATIENT
+// ══════════════════════════════════
+function editPatient(pid) {
+  const p = allPatients.find(x => x.pid === pid);
+  if (!p) return;
+  document.getElementById('edit-pid').value      = p.pid;
+  document.getElementById('edit-name').value     = p.name || '';
+  document.getElementById('edit-dob').value      = p.dob  || '';
+  document.getElementById('edit-phone').value    = p.phone || '';
+  document.getElementById('edit-cong').value     = p.congenital || '';
+  document.getElementById('edit-dept').value     = p.department || '';
+  openModal('edit-modal');
+}
+
+async function saveEdit() {
+  const pid   = document.getElementById('edit-pid').value;
+  const name  = document.getElementById('edit-name').value.trim();
+  const dob   = document.getElementById('edit-dob').value.trim();
+  const phone = document.getElementById('edit-phone').value.trim();
+  const cong  = document.getElementById('edit-cong').value.trim();
+  const dept  = document.getElementById('edit-dept').value.trim();
+  if (!name) { alert('กรุณากรอกชื่อ-สกุลค่ะ'); return; }
+  showOverlay('กำลังบันทึก...');
+  closeModal('edit-modal');
+  try {
+    const res = await api('editPatient', { pid, name, dob, phone, congenital: cong, department: dept });
+    hideOverlay();
+    if (res.ok) {
+      alert('✅ แก้ไขข้อมูลเรียบร้อยแล้วค่ะ');
+      await loadAll();
+    } else {
+      alert('เกิดข้อผิดพลาด: ' + (res.error||'unknown'));
+    }
+  } catch(e) { hideOverlay(); alert('เกิดข้อผิดพลาด: ' + e.message); }
+}
+
   if (!refItem) return 'nd';
   const t = getTier(v, refItem);
   if (t.cls === 'ok')   return 'ok';
