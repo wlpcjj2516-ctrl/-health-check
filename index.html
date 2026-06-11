@@ -1325,30 +1325,45 @@ function renderResult(p) {
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
       <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>
       <div id="img-preview-wrap" style="display:none;margin-top:14px;text-align:center">
-        <div style="background:var(--teal-p);border:1.5px solid var(--teal-l);border-radius:10px;padding:12px 16px;margin-bottom:10px;text-align:left">
-          <div style="font-weight:700;color:var(--teal);margin-bottom:6px">📸 วิธีบันทึกภาพ</div>
-          <div style="font-size:.8rem;color:var(--txt-m);line-height:1.8">
-            <div>📱 <b>iPhone:</b> กดปุ่ม Side + Volume Up พร้อมกัน</div>
-            <div>🤖 <b>Android:</b> กดปุ่ม Power + Volume Down พร้อมกัน</div>
-          </div>
+        <div style="position:sticky;top:0;z-index:10000;background:rgba(0,0,0,.85);color:#fff;padding:10px 16px;text-align:center;font-size:.82rem">
+          📸 <b>Screenshot เพื่อบันทึก:</b> iPhone กด Side+Volume Up | Android กด Power+Volume Down
+          <button onclick="const w=document.getElementById('img-preview-wrap');w.style.display='none';w.style.position='';w.style.top='';w.style.left='';w.style.right='';w.style.bottom='';w.style.zIndex='';w.style.background='';w.style.padding='';document.getElementById('btn-save-img').style.display='flex'" style="margin-left:12px;background:#fff;color:#000;border:none;border-radius:6px;padding:4px 12px;font-size:.8rem;cursor:pointer">✕ ปิด</button>
         </div>
-        <img id="img-preview" style="width:100%;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)" src="" alt="ผลตรวจสุขภาพ">
-        <button class="btn btn-ghost" style="margin-top:10px;width:100%" onclick="document.getElementById('img-preview-wrap').style.display='none';document.getElementById('btn-save-img').style.display='flex'">✕ ปิด</button>
+        <img id="img-preview" style="width:100%;display:block" src="" alt="ผลตรวจสุขภาพ">
       </div>
     </div>
     ${secHtml}${noteHtml}`;
   goPage('pg-result');
 }
 
+function showImageModal(src) {
+  const old = document.getElementById('result-img-modal');
+  if (old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'result-img-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+  const bar = document.createElement('div');
+  bar.style.cssText = 'width:100%;background:#0a4f5e;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;flex-shrink:0;position:sticky;top:0;z-index:2;';
+  bar.innerHTML = '<div style="color:#fff;font-size:14px;font-weight:700;line-height:1.3;">📸 กดค้างที่ภาพ<br><span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.65);">เลือก &quot;บันทึกภาพ&quot; หรือ &quot;Save to Photos&quot;</span></div><button onclick="document.getElementById(\'result-img-modal\').remove()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;font-weight:700;width:36px;height:36px;border-radius:50%;cursor:pointer;">✕</button>';
+  const hint = document.createElement('div');
+  hint.style.cssText = 'width:100%;background:#0d6577;padding:10px 18px;flex-shrink:0;';
+  hint.innerHTML = '<div style="color:#fff;font-size:12px;line-height:1.8;"><b>1</b> กดค้างที่รูปภาพด้านล่าง &nbsp;&nbsp;<b>2</b> เลือก <strong style="color:#c8a400;">"Save to Photos"</strong></div>';
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'width:100%;max-width:100%;display:block;-webkit-touch-callout:default;touch-action:auto;padding:12px;';
+  img.setAttribute('draggable','true');
+  overlay.appendChild(bar);
+  overlay.appendChild(hint);
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+}
+
 function saveResultImage() {
   const el = document.getElementById('result-content');
   if (!el) return;
   const btnEl = document.getElementById('btn-save-img');
-  const previewWrap = document.getElementById('img-preview-wrap');
-  const previewImg = document.getElementById('img-preview');
   if (btnEl) btnEl.style.display='none';
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
-  if (previewWrap) previewWrap.style.display='none';
 
   html2canvas(el, {
     scale: 2,
@@ -1359,23 +1374,14 @@ function saveResultImage() {
     scrollY: -window.scrollY
   }).then(canvas => {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    // เปิดภาพใน tab ใหม่ — Safari/iOS รองรับการกดค้างบันทึกจากวิธีนี้
-    const newTab = window.open();
-    if (newTab) {
-      newTab.document.write('<html><head><title>ผลตรวจสุขภาพ</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#000;display:flex;justify-content:center;align-items:flex-start;min-height:100vh"><img src="'+dataUrl+'" style="width:100%;max-width:700px" /><p style="position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:#fff;text-align:center;padding:12px;font-size:14px;font-family:sans-serif">📌 กดค้างที่ภาพ แล้วเลือก "บันทึกภาพ" ค่ะ</p></body></html>');
-      newTab.document.close();
-    } else {
-      // fallback แสดงใน preview
-      if (previewImg) previewImg.src = dataUrl;
-      if (previewWrap) previewWrap.style.display='block';
-      setTimeout(()=>{ if(previewWrap) previewWrap.scrollIntoView({behavior:'smooth'}); }, 100);
-    }
+    showImageModal(dataUrl);
     if (btnEl) btnEl.style.display='flex';
   }).catch(e => {
     if (btnEl) btnEl.style.display='flex';
     alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
   });
 }
+
 
 function togSec(h){ const b=h.nextElementSibling,c=h.querySelector('.sec-chev'),o=b.style.display!=='none'; b.style.display=o?'none':'block'; c.classList.toggle('open',!o); }
 
