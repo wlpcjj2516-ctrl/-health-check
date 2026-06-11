@@ -1059,7 +1059,13 @@ function onSelPatient() {
   const fuEl=document.getElementById('att-followup'); if(fuEl) fuEl.value=p&&p.doctor_followup||'';
   labBase64s=[]; labFiles_=[];
   document.getElementById('lab-thumbs').innerHTML='';
-  renderAITable([]);  // แสดงตารางกรอกผลทันที
+  // โหลดค่าเดิมจาก labData ถ้ามี
+  if (p && p.labData && Object.keys(p.labData).length) {
+    const existingItems = Object.entries(p.labData).map(([key,val])=>({key,value:String(val)}));
+    renderAITable(existingItems);
+  } else {
+    renderAITable([]);  // แสดงตารางเปล่า
+  }
   document.getElementById('btn-ai').style.display='none';
 }
 
