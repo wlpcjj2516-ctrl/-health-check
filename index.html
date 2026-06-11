@@ -1309,10 +1309,11 @@ function renderResult(p) {
         </div>
       </div>
     </div>
-    ${hiL.length?`<div class="alert alert-danger fu">⚠️ <b>พบค่าผิดปกติ ${hiL.length} รายการ</b> — กรุณาพบแพทย์เพื่อรับคำปรึกษาค่ะ</div>`:''}
+    ${hiL.length?`<div class="alert alert-danger fu">🚨 <b>พบค่าสูงกว่าเกณฑ์ ${hiL.length} รายการ</b> — กรุณาพบแพทย์เพื่อรับคำปรึกษาค่ะ</div>`:''}
+    ${loL.length?`<div class="alert fu" style="background:var(--warn-bg);border:1.5px solid var(--warn);border-radius:10px;padding:12px 16px;margin:4px 0 8px">⚠️ <b>พบค่าเสี่ยง/ควรระวัง ${loL.length} รายการ</b> — ควรดูแลสุขภาพและติดตามผลค่ะ</div>`:''}
     <div class="sum-grid fu">
       <div class="sum-box ok"><div style="font-size:1.1rem">✅</div><div class="sum-n">${okN}</div><div class="sum-l">ปกติ</div></div>
-      <div class="sum-box wn"><div style="font-size:1.1rem">⚠️</div><div class="sum-n">${loL.length}</div><div class="sum-l">ต่ำกว่าเกณฑ์</div></div>
+      <div class="sum-box wn"><div style="font-size:1.1rem">⚠️</div><div class="sum-n">${loL.length}</div><div class="sum-l">เสี่ยง/ควรระวัง</div></div>
       <div class="sum-box hi"><div style="font-size:1.1rem">🚨</div><div class="sum-n">${hiL.length}</div><div class="sum-l">สูงกว่าเกณฑ์</div></div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
