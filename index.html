@@ -1240,7 +1240,11 @@ async function saveAttach() {
 // RENDER RESULT
 // ══════════════════════════════════
 function renderResult(p) {
-  const flags=getFlags(p.labData||{});
+  // ดึงเพศจากชื่อ
+  const _name = p.name||'';
+  const _gender = (_name.startsWith('นาย')||_name.startsWith('เด็กชาย')) ? 'male'
+    : (_name.startsWith('นาง')||_name.startsWith('นางสาว')||_name.startsWith('เด็กหญิง')) ? 'female' : 'both';
+  const flags=getFlags(p.labData||{}, _gender);
   const hiL=flags.filter(f=>f.flag==='hi');
   const loL=flags.filter(f=>f.flag==='lo');
   const okN=flags.filter(f=>f.flag==='ok').length;
@@ -1312,36 +1316,45 @@ function renderResult(p) {
       <div class="sum-box hi"><div style="font-size:1.1rem">🚨</div><div class="sum-n">${hiL.length}</div><div class="sum-l">สูงกว่าเกณฑ์</div></div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
-      <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage(this)">📥 บันทึกผลเป็นภาพ</button>
+      <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>
+      <div id="img-preview-wrap" style="display:none;margin-top:14px;text-align:center">
+        <p style="font-size:.82rem;color:var(--teal);font-weight:600;margin-bottom:8px">📌 กดค้างที่ภาพด้านล่าง แล้วเลือก "บันทึกภาพ" ค่ะ</p>
+        <img id="img-preview" style="width:100%;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)" src="" alt="ผลตรวจสุขภาพ">
+        <button class="btn btn-ghost" style="margin-top:10px;width:100%" onclick="document.getElementById('img-preview-wrap').style.display='none';document.getElementById('btn-save-img').style.display='flex'">✕ ปิด</button>
+      </div>
     </div>
     ${secHtml}${noteHtml}`;
   goPage('pg-result');
 }
 
-function saveResultImage(btn) {
+function saveResultImage() {
   const el = document.getElementById('result-content');
   if (!el) return;
-  // ซ่อนปุ่มก่อน capture
   const btnEl = document.getElementById('btn-save-img');
+  const previewWrap = document.getElementById('img-preview-wrap');
+  const previewImg = document.getElementById('img-preview');
   if (btnEl) btnEl.style.display='none';
   // เปิด section ทั้งหมด
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
-  
+  // ซ่อน preview wrap ขณะ capture
+  if (previewWrap) previewWrap.style.display='none';
+
   html2canvas(el, {
     scale: 2,
     useCORS: true,
     backgroundColor: '#f4f8f9',
-    windowWidth: el.scrollWidth,
+    width: el.offsetWidth,
     height: el.scrollHeight,
-    scrollY: 0
+    scrollY: -window.scrollY
   }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'ผลตรวจสุขภาพ.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.92);
-    link.click();
-    if (btnEl) btnEl.style.display='';
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    // แสดงภาพให้กดค้างบันทึก
+    if (previewImg) previewImg.src = dataUrl;
+    if (previewWrap) previewWrap.style.display='block';
+    // scroll ไปที่ภาพ
+    setTimeout(()=>{ if(previewWrap) previewWrap.scrollIntoView({behavior:'smooth'}); }, 100);
   }).catch(e => {
-    if (btnEl) btnEl.style.display='';
+    if (btnEl) btnEl.style.display='flex';
     alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
   });
 }
@@ -1663,7 +1676,7 @@ function exportReportCSV() {
     const abn = flags.filter(f=>f.flag==='hi'||f.flag==='lo').map(f=>REF[f.key]?.label||f.key).join('; ');
     return [
       p.pid, p.name||'', p.dob||'', p.department||'', p.phone||'',
-      p.congenital||'', fmtDate(p.regDate),
+      p.congenital||'', fmtDate(p.regDate), p.doctor_followup||'',
       p.hasResult?'ผลออกแล้ว':'รอผล',
       tagMap[cls]||'—', '',  abn
     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
@@ -1751,8 +1764,18 @@ function getFlag(v, refItem) {
   if (t.cls === 'hi')   return 'hi';
   return 'nd';
 }
-function getFlags(d) {
-  return Object.keys(REF).map(k => ({ key:k, flag: getFlag(parseFloat(d[k]), REF[k]) }));
+function getFlags(d, gender) {
+  // gender: 'male' | 'female' | 'both' | undefined
+  return Object.keys(REF)
+    .filter(k => {
+      if (!d[k] && d[k]!==0) return false; // ไม่มีค่า
+      const r = REF[k];
+      if (!r) return false;
+      if (r.gender === 'both') return true;
+      if (!gender || gender === 'both') return true;
+      return r.gender === gender;
+    })
+    .map(k => ({ key:k, flag: getFlag(parseFloat(d[k]), REF[k]) }));
 }
 
 function showOverlay(msg){ document.getElementById('overlay-msg').textContent=msg||'กำลังดำเนินการ...'; document.getElementById('overlay').classList.add('show'); }
