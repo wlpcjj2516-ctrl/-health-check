@@ -1019,14 +1019,13 @@ function onSelPatient() {
   const pid = document.getElementById('attach-sel').value;
   const body = document.getElementById('attach-body');
   if (!pid) { body.style.display='none'; return; }
-  const p = allPatients.find(x=>x.pid===pid);
-  if (!p) return;
+  const p = allPatients.find(x=>x.pid===pid) || allPatients.find(x=>String(x.pid)===String(pid));
   body.style.display='block';
-  document.getElementById('att-name').textContent=p.name;
-  document.getElementById('att-detail').textContent='บัตร: '+p.pid+' · วันเกิด: '+(p.dob||'—');
-  document.getElementById('att-status').textContent=p.hasResult?'✅ มีผลแล้ว':'⏳ รอผล';
-  document.getElementById('att-status').className='badge '+(p.hasResult?'bd':'bw');
-  document.getElementById('att-note').value=p.doctor_note||'';
+  document.getElementById('att-name').textContent=p ? p.name : document.getElementById('attach-sel').options[document.getElementById('attach-sel').selectedIndex].text;
+  document.getElementById('att-detail').textContent=p ? ('บัตร: '+p.pid+' · วันเกิด: '+(p.dob||'—')) : 'บัตร: '+pid;
+  document.getElementById('att-status').textContent=p&&p.hasResult?'✅ มีผลแล้ว':'⏳ รอผล';
+  document.getElementById('att-status').className='badge '+(p&&p.hasResult?'bd':'bw');
+  document.getElementById('att-note').value=p&&p.doctor_note||'';
   labBase64s=[]; labFiles_=[];
   document.getElementById('lab-thumbs').innerHTML='';
   document.getElementById('ai-tbl-wrap').style.display='none';
