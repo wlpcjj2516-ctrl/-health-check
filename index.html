@@ -778,7 +778,7 @@ window.onload = () => {
 function loadConfig() {
   document.getElementById('script-url').value = SCRIPT_URL;
   document.getElementById('app-url').value    = APP_URL;
-  if (SCRIPT_URL) document.getElementById('config-card').style.display = 'none';
+  document.getElementById('config-card').style.display = 'none';
 }
 
 async function saveConfig() {
