@@ -1125,11 +1125,11 @@ async function doAI() {
       mediaType: mime
     });
     if (res.ok && res.data?.found_items) {
-      renderAITable(res.data.found_items);
-    } else {
-      renderAITable([]);
-      alert('AI อ่านไม่ได้ค่ะ กรอกเองได้เลย: ' + (res.error||''));
-    }
+  renderAITable(res.data.found_items);
+} else {
+  renderAITable([]);
+  alert('AI อ่านไม่ได้ค่ะ: ' + JSON.stringify(res));
+}
   } catch(e) { renderAITable([]); alert('AI เชื่อมต่อไม่ได้ กรอกเองได้เลยค่ะ'); }
   btn.disabled=false; btn.innerHTML='✨ อ่านภาพอีกครั้ง';
 }
