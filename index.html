@@ -936,6 +936,14 @@ function filterList() {
   }));
 }
 
+function fmtPhone(v) {
+  if (!v) return '—';
+  const s = String(v).trim();
+  // ถ้าเป็นตัวเลขล้วนและไม่เริ่มด้วย 0 และยาว <= 9 หลัก → เติม 0
+  if (/^\d+$/.test(s) && !s.startsWith('0') && s.length <= 9) return '0' + s;
+  return s;
+}
+
 function fmtDate(str) {
   if (!str) return '—';
   if (String(str).includes('T') || (String(str).includes('-') && String(str).length >= 10)) {
@@ -990,7 +998,7 @@ function renderList(list) {
     tr.innerHTML = `<td>${i+1}</td><td style="font-size:.77rem">${p.pid}</td>
       <td>${p.name||'—'}</td>
       <td>${fmtAge(p.dob)}</td>
-      <td>${p.phone||'—'}</td>
+      <td>${fmtPhone(p.phone)}</td>
       <td style="font-size:.75rem;max-width:100px">${p.congenital||'—'}</td>
       <td style="font-size:.75rem;max-width:100px">${p.department||'—'}</td>
       <td>${fmtDate(p.regDate)}</td>
@@ -1311,7 +1319,7 @@ function renderResult(p, isAdmin=false) {
         <div class="result-meta">
           <span>บัตร: ${p.pid}</span>
           <span>อายุ: ${p.dob||'—'} ปี</span>
-          <span>โทร: ${p.phone||'—'}</span>
+          <span>โทร: ${fmtPhone(p.phone)}</span>
           <span>วันตรวจ: ${fmtDate(p.resultDate)||'—'}</span>
         </div>
       </div>
@@ -1362,86 +1370,83 @@ function saveResultPDF() {
   if (!el) return;
   const btnEl = document.getElementById('btn-save-img');
   if (btnEl) { btnEl.disabled=true; btnEl.textContent='⏳ กำลังสร้าง PDF...'; }
+  
+  // เปิด section ทั้งหมด
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
-
-  const clone = el.cloneNode(true);
-  clone.style.cssText = 'position:fixed;top:0;left:0;width:390px;background:#f4f8f9;z-index:-9999;opacity:1;';
-  clone.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
-  clone.querySelectorAll('.btn').forEach(b=>b.style.display='none');
-  const style = document.createElement('style');
-  style.textContent = `
-    :root, * {
-      --teal:#0a4f5e; --teal-m:#1a7a8a; --teal-l:#2ea8b8; --teal-p:#e8f6f8;
-      --gold:#c8a400; --gold-bg:#fdf8e8;
-      --ok:#2e7d52; --ok-bg:#e8f5ee;
-      --hi:#c0392b; --hi-bg:#fde8e8;
-      --warn:#b85c0a; --warn-bg:#fff3e0;
-      --txt:#1a2332; --txt-m:#334155; --txt-l:#64748b;
-      --border:#d0e8ec; --surface:#f4f8f9;
-    }
-    body { background:#f4f8f9; }
-    .result-banner { background:linear-gradient(135deg,#0a4f5e,#1a7a8a)!important; color:#fff!important; }
-    .result-name { color:#fff!important; font-weight:700!important; }
-    .result-meta span { color:rgba(255,255,255,0.85)!important; }
-    .sec-card { background:#fff!important; border-radius:14px!important; }
-    .sec-hdr { background:#f0f8fa!important; }
-    .sec-ttl { color:#0a4f5e!important; font-weight:700!important; }
-    .sec-body { display:block!important; }
-    .tag.ok { background:#e8f5ee!important; color:#2e7d52!important; }
-    .tag.hi { background:#fde8e8!important; color:#c0392b!important; }
-    .tag.lo { background:#fff3e0!important; color:#b85c0a!important; }
-    .dot.ok { background:#2e7d52!important; }
-    .dot.hi { background:#c0392b!important; }
-    .dot.lo { background:#b85c0a!important; }
-    .sum-box { background:#fff!important; }
-    .sum-box.ok .sum-n { color:#2e7d52!important; }
-    .sum-box.wn .sum-n { color:#b85c0a!important; }
-    .sum-box.hi .sum-n { color:#c0392b!important; }
-    .doc-note { background:#fdf8e8!important; border:1.5px solid #c8a400!important; }
-    .alert-danger { background:#fde8e8!important; border:1.5px solid #c04040!important; color:#6a1010!important; }
-  `;
-  clone.appendChild(style);
-  document.body.appendChild(clone);
-
+  // scroll ไปบนสุดก่อน capture
+  el.scrollIntoView({behavior:'instant'});
+  window.scrollTo(0,0);
+  
   setTimeout(() => {
-    html2canvas(clone, {
+    html2canvas(el, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#f4f8f9',
-      width: clone.offsetWidth,
-      height: clone.scrollHeight,
+      width: el.offsetWidth,
+      height: el.scrollHeight,
       scrollY: 0,
-      logging: false
+      logging: false,
+      onclone: (doc) => {
+        // inject ใน cloned document โดยตรง — ได้ computed styles เต็มๆ
+        doc.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
+        doc.querySelectorAll('.btn').forEach(b=>b.style.display='none');
+        const s = doc.createElement('style');
+        s.textContent = `
+          .result-banner{background:#0a4f5e!important}
+          .result-name{color:#fff!important}
+          .result-meta span{color:rgba(255,255,255,0.85)!important}
+          .sec-hdr{background:#e8f6f8!important}
+          .sec-ttl{color:#0a4f5e!important}
+          .tag.ok{background:#e8f5ee!important;color:#2e7d52!important}
+          .tag.hi{background:#fde8e8!important;color:#c0392b!important}
+          .tag.lo{background:#fff3e0!important;color:#b85c0a!important}
+          .dot.ok{background:#2e7d52!important}
+          .dot.hi{background:#c0392b!important}
+          .dot.lo{background:#b85c0a!important}
+          .sum-box.ok .sum-n{color:#2e7d52!important}
+          .sum-box.wn .sum-n{color:#b85c0a!important}
+          .sum-box.hi .sum-n{color:#c0392b!important}
+          .sum-box.ok::before{background:#2e7d52!important}
+          .sum-box.wn::before{background:#b85c0a!important}
+          .sum-box.hi::before{background:#c0392b!important}
+          .doc-note{background:#fdf8e8!important;border-color:#c8a400!important}
+          .alert-danger{background:#fde8e8!important;border-color:#c04040!important;color:#6a1010!important}
+          .res-nm{color:#1a2332!important}
+        `;
+        doc.head.appendChild(s);
+      }
     }).then(canvas => {
-      document.body.removeChild(clone);
       const { jsPDF } = window.jspdf;
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdfW = 210; // A4 width mm
+      const pdfW = 210;
       const pdfH = (canvas.height * pdfW) / canvas.width;
-      const pdf = new jsPDF({ orientation: pdfH > 297 ? 'p' : 'p', unit: 'mm', format: 'a4' });
-      
-      // แบ่งหน้าถ้าสูงเกิน A4
       const pageH = 297;
+      const pdf = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
       let yPos = 0;
       while (yPos < pdfH) {
         if (yPos > 0) pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, -yPos, pdfW, pdfH);
         yPos += pageH;
       }
-      
-      pdf.save('ผลตรวจสุขภาพ.pdf');
+      // ตรวจสอบว่าเป็น iOS หรือไม่
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (isIOS) {
+        // iOS Safari ไม่รองรับ pdf.save() — ใช้ showImageModal แทน
+        const imgDataFinal = canvas.toDataURL('image/jpeg', 0.95);
+        showImageModal(imgDataFinal);
+      } else {
+        pdf.save('ผลตรวจสุขภาพ.pdf');
+      }
       if (btnEl) { btnEl.disabled=false; btnEl.textContent='📄 บันทึกเป็น PDF'; btnEl.style.display='flex'; }
     }).catch(e => {
-      document.body.removeChild(clone);
       if (btnEl) { btnEl.disabled=false; btnEl.textContent='📄 บันทึกเป็น PDF'; btnEl.style.display='flex'; }
       alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
     });
-  }, 400);
+  }, 300);
 }
 
-function saveResultImage() {
-  saveResultPDF();
-}
+
+function saveResultImage() { saveResultPDF(); }
 
 
 
