@@ -516,6 +516,15 @@ tbody tr:last-child td{border:none}
 
 <!-- MODAL ยืนยัน -->
 <div class="modal" id="confirm-modal">
+  <div class="modal-box">
+    <h3>✅ ยืนยันข้อมูลก่อนบันทึก</h3>
+    <div id="confirm-body"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="confirmReg()">✅ ยืนยัน</button>
+      <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">← แก้ไข</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL แก้ไขข้อมูล -->
 <div class="modal" id="edit-modal">
@@ -537,15 +546,6 @@ tbody tr:last-child td{border:none}
     <div style="display:flex;gap:10px;margin-top:16px">
       <button class="btn btn-primary" onclick="saveEdit()">💾 บันทึก</button>
       <button class="btn btn-ghost" onclick="closeModal('edit-modal')">ยกเลิก</button>
-    </div>
-  </div>
-</div>
-  <div class="modal-box">
-    <h3>✅ ยืนยันข้อมูลก่อนบันทึก</h3>
-    <div id="confirm-body"></div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="btn btn-primary" onclick="confirmReg()">✅ ยืนยัน</button>
-      <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">← แก้ไข</button>
     </div>
   </div>
 </div>
