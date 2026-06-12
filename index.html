@@ -1025,7 +1025,7 @@ function quickAttach(pid) {
 
 function adminView(pid) {
   const p = allPatients.find(x=>String(x.pid)===String(pid));
-  if (p) renderResult(p);
+  if (p) renderResult(p, true);
   else alert('ไม่พบข้อมูลผู้ป่วยค่ะ กรุณารีเฟรชหน้าแล้วลองใหม่');
 }
 
@@ -1245,7 +1245,7 @@ async function saveAttach() {
 // ══════════════════════════════════
 // RENDER RESULT
 // ══════════════════════════════════
-function renderResult(p) {
+function renderResult(p, isAdmin=false) {
   // ดึงเพศจากชื่อ
   const _name = p.name||'';
   const _gender = (_name.startsWith('นาย')||_name.startsWith('เด็กชาย')) ? 'male'
@@ -1322,9 +1322,12 @@ function renderResult(p) {
       <div class="sum-box wn"><div style="font-size:1.1rem">⚠️</div><div class="sum-n">${loL.length}</div><div class="sum-l">เสี่ยง/ควรระวัง</div></div>
       <div class="sum-box hi"><div style="font-size:1.1rem">🚨</div><div class="sum-n">${hiL.length}</div><div class="sum-l">สูงกว่าเกณฑ์</div></div>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:16px" class="fu">
-      <button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>
-
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap" class="fu">
+      ${isAdmin
+        ? `<button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์ / ส่งออก PDF</button>
+           <button class="btn btn-ghost" onclick="goPage('pg-list', document.querySelectorAll('.ntab')[1])">← กลับรายชื่อ</button>`
+        : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>`
+      }
     </div>
     ${secHtml}${noteHtml}`;
   goPage('pg-result');
@@ -1367,30 +1370,46 @@ function saveResultImage() {
   // แทนที่ CSS variable ด้วยสีจริงๆ
   const style = document.createElement('style');
   style.textContent = `
-    * { --teal:#0a4f5e!important; --teal-m:#1a7a8a!important; --teal-l:#2ea8b8!important; --teal-p:#e8f6f8!important;
-        --gold:#c8a400!important; --gold-bg:#fdf8e8!important;
-        --ok:#2e7d52!important; --ok-bg:#e8f5ee!important;
-        --hi:#c0392b!important; --hi-bg:#fde8e8!important;
-        --warn:#b85c0a!important; --warn-bg:#fff3e0!important;
-        --txt-m:#334155!important; --txt-l:#64748b!important;
-        --border:#d0e8ec!important; --surface:#f8fbfc!important; }
-    .result-banner { background:#0a4f5e!important; }
-    .result-name { color:#fff!important; }
-    .result-meta { color:rgba(255,255,255,0.85)!important; }
+    :root, * {
+      --teal:#0a4f5e; --teal-m:#1a7a8a; --teal-l:#2ea8b8; --teal-p:#e8f6f8;
+      --gold:#c8a400; --gold-bg:#fdf8e8;
+      --ok:#2e7d52; --ok-bg:#e8f5ee;
+      --hi:#c0392b; --hi-bg:#fde8e8;
+      --warn:#b85c0a; --warn-bg:#fff3e0;
+      --txt:#1a2332; --txt-m:#334155; --txt-l:#64748b;
+      --border:#d0e8ec; --surface:#f4f8f9;
+    }
+    body { background:#f4f8f9; font-family:'Noto Sans Thai',sans-serif; }
+    .result-banner { background:linear-gradient(135deg,#0a4f5e,#1a7a8a)!important; color:#fff!important; }
+    .result-name { color:#fff!important; font-weight:700!important; }
     .result-meta span { color:rgba(255,255,255,0.85)!important; }
-    .sec-hdr { background:#f0f8fa!important; }
-    .sec-ttl { color:#0a4f5e!important; }
-    .tag.ok { background:#e8f5ee!important; color:#2e7d52!important; }
-    .tag.hi { background:#fde8e8!important; color:#c0392b!important; }
-    .tag.lo { background:#fff3e0!important; color:#b85c0a!important; }
+    .sec-card { background:#fff!important; border-radius:14px!important; box-shadow:0 2px 12px rgba(10,79,94,.07)!important; }
+    .sec-hdr { background:#f0f8fa!important; border-bottom:1px solid #d0e8ec!important; }
+    .sec-ttl { color:#0a4f5e!important; font-weight:700!important; }
+    .sec-body { display:block!important; }
+    .tag.ok { background:#e8f5ee!important; color:#2e7d52!important; font-weight:600!important; }
+    .tag.hi { background:#fde8e8!important; color:#c0392b!important; font-weight:600!important; }
+    .tag.lo { background:#fff3e0!important; color:#b85c0a!important; font-weight:600!important; }
     .dot.ok { background:#2e7d52!important; }
     .dot.hi { background:#c0392b!important; }
     .dot.lo { background:#b85c0a!important; }
+    .sum-box { background:#fff!important; border-radius:12px!important; }
     .sum-box.ok .sum-n { color:#2e7d52!important; }
     .sum-box.wn .sum-n { color:#b85c0a!important; }
     .sum-box.hi .sum-n { color:#c0392b!important; }
-    .doc-note { background:#fdf8e8!important; border-color:#c8a400!important; }
-    .alert-danger { background:#fde8e8!important; border-color:#c0392b!important; }
+    .sum-box.ok::before { background:#2e7d52!important; }
+    .sum-box.wn::before { background:#b85c0a!important; }
+    .sum-box.hi::before { background:#c0392b!important; }
+    .sum-l { color:#64748b!important; }
+    .doc-note { background:#fdf8e8!important; border:1.5px solid #c8a400!important; border-radius:10px!important; }
+    .doc-note h4 { color:#8a6010!important; }
+    .doc-note p { color:#705010!important; }
+    .alert-danger { background:#fde8e8!important; border:1.5px solid #c04040!important; color:#6a1010!important; }
+    .res-nm { color:#1a2332!important; }
+    .res-unit { color:#6b8299!important; }
+    .res-ref { color:#6b8299!important; }
+    .res-row { border-bottom:1px solid #f0f5f6!important; }
+    .res-val { font-weight:700!important; }
   `;
   clone.appendChild(style);
   document.body.appendChild(clone);
