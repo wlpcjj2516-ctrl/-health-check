@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;600;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --teal:#0a4f5e;--teal-m:#1a7a8a;--teal-l:#2ea8b8;--teal-p:#e8f6f8;
@@ -1324,9 +1325,10 @@ function renderResult(p, isAdmin=false) {
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap" class="fu">
       ${isAdmin
-        ? `<button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์ / ส่งออก PDF</button>
+        ? `<button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์</button>
+           <button class="btn btn-gold" onclick="saveResultPDF()">📄 ส่งออก PDF</button>
            <button class="btn btn-ghost" onclick="goPage('pg-list', document.querySelectorAll('.ntab')[1])">← กลับรายชื่อ</button>`
-        : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultImage()">📷 สร้างภาพผลตรวจ</button>`
+        : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultPDF()">📄 บันทึกเป็น PDF</button>`
       }
     </div>
     ${secHtml}${noteHtml}`;
@@ -1355,19 +1357,17 @@ function showImageModal(src) {
   document.body.appendChild(overlay);
 }
 
-function saveResultImage() {
+function saveResultPDF() {
   const el = document.getElementById('result-content');
   if (!el) return;
   const btnEl = document.getElementById('btn-save-img');
-  if (btnEl) btnEl.style.display='none';
+  if (btnEl) { btnEl.disabled=true; btnEl.textContent='⏳ กำลังสร้าง PDF...'; }
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
 
-  // inject computed colors ก่อน capture เพื่อให้สีไม่จาง
   const clone = el.cloneNode(true);
-  clone.style.cssText = 'position:fixed;top:0;left:0;width:'+el.offsetWidth+'px;background:#f4f8f9;z-index:-9999;opacity:1;';
+  clone.style.cssText = 'position:fixed;top:0;left:0;width:390px;background:#f4f8f9;z-index:-9999;opacity:1;';
   clone.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
   clone.querySelectorAll('.btn').forEach(b=>b.style.display='none');
-  // แทนที่ CSS variable ด้วยสีจริงๆ
   const style = document.createElement('style');
   style.textContent = `
     :root, * {
@@ -1379,41 +1379,30 @@ function saveResultImage() {
       --txt:#1a2332; --txt-m:#334155; --txt-l:#64748b;
       --border:#d0e8ec; --surface:#f4f8f9;
     }
-    body { background:#f4f8f9; font-family:'Noto Sans Thai',sans-serif; }
+    body { background:#f4f8f9; }
     .result-banner { background:linear-gradient(135deg,#0a4f5e,#1a7a8a)!important; color:#fff!important; }
     .result-name { color:#fff!important; font-weight:700!important; }
     .result-meta span { color:rgba(255,255,255,0.85)!important; }
-    .sec-card { background:#fff!important; border-radius:14px!important; box-shadow:0 2px 12px rgba(10,79,94,.07)!important; }
-    .sec-hdr { background:#f0f8fa!important; border-bottom:1px solid #d0e8ec!important; }
+    .sec-card { background:#fff!important; border-radius:14px!important; }
+    .sec-hdr { background:#f0f8fa!important; }
     .sec-ttl { color:#0a4f5e!important; font-weight:700!important; }
     .sec-body { display:block!important; }
-    .tag.ok { background:#e8f5ee!important; color:#2e7d52!important; font-weight:600!important; }
-    .tag.hi { background:#fde8e8!important; color:#c0392b!important; font-weight:600!important; }
-    .tag.lo { background:#fff3e0!important; color:#b85c0a!important; font-weight:600!important; }
+    .tag.ok { background:#e8f5ee!important; color:#2e7d52!important; }
+    .tag.hi { background:#fde8e8!important; color:#c0392b!important; }
+    .tag.lo { background:#fff3e0!important; color:#b85c0a!important; }
     .dot.ok { background:#2e7d52!important; }
     .dot.hi { background:#c0392b!important; }
     .dot.lo { background:#b85c0a!important; }
-    .sum-box { background:#fff!important; border-radius:12px!important; }
+    .sum-box { background:#fff!important; }
     .sum-box.ok .sum-n { color:#2e7d52!important; }
     .sum-box.wn .sum-n { color:#b85c0a!important; }
     .sum-box.hi .sum-n { color:#c0392b!important; }
-    .sum-box.ok::before { background:#2e7d52!important; }
-    .sum-box.wn::before { background:#b85c0a!important; }
-    .sum-box.hi::before { background:#c0392b!important; }
-    .sum-l { color:#64748b!important; }
-    .doc-note { background:#fdf8e8!important; border:1.5px solid #c8a400!important; border-radius:10px!important; }
-    .doc-note h4 { color:#8a6010!important; }
-    .doc-note p { color:#705010!important; }
+    .doc-note { background:#fdf8e8!important; border:1.5px solid #c8a400!important; }
     .alert-danger { background:#fde8e8!important; border:1.5px solid #c04040!important; color:#6a1010!important; }
-    .res-nm { color:#1a2332!important; }
-    .res-unit { color:#6b8299!important; }
-    .res-ref { color:#6b8299!important; }
-    .res-row { border-bottom:1px solid #f0f5f6!important; }
-    .res-val { font-weight:700!important; }
   `;
   clone.appendChild(style);
   document.body.appendChild(clone);
-  
+
   setTimeout(() => {
     html2canvas(clone, {
       scale: 2,
@@ -1425,16 +1414,35 @@ function saveResultImage() {
       logging: false
     }).then(canvas => {
       document.body.removeChild(clone);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      showImageModal(dataUrl);
-      if (btnEl) btnEl.style.display='flex';
+      const { jsPDF } = window.jspdf;
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfW = 210; // A4 width mm
+      const pdfH = (canvas.height * pdfW) / canvas.width;
+      const pdf = new jsPDF({ orientation: pdfH > 297 ? 'p' : 'p', unit: 'mm', format: 'a4' });
+      
+      // แบ่งหน้าถ้าสูงเกิน A4
+      const pageH = 297;
+      let yPos = 0;
+      while (yPos < pdfH) {
+        if (yPos > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, -yPos, pdfW, pdfH);
+        yPos += pageH;
+      }
+      
+      pdf.save('ผลตรวจสุขภาพ.pdf');
+      if (btnEl) { btnEl.disabled=false; btnEl.textContent='📄 บันทึกเป็น PDF'; btnEl.style.display='flex'; }
     }).catch(e => {
       document.body.removeChild(clone);
-      if (btnEl) btnEl.style.display='flex';
+      if (btnEl) { btnEl.disabled=false; btnEl.textContent='📄 บันทึกเป็น PDF'; btnEl.style.display='flex'; }
       alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
     });
   }, 400);
 }
+
+function saveResultImage() {
+  saveResultPDF();
+}
+
 
 
 function togSec(h){ const b=h.nextElementSibling,c=h.querySelector('.sec-chev'),o=b.style.display!=='none'; b.style.display=o?'none':'block'; c.classList.toggle('open',!o); }
