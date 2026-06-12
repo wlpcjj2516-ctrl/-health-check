@@ -1359,12 +1359,40 @@ function saveResultImage() {
   if (btnEl) btnEl.style.display='none';
   document.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
 
-  // สร้าง clone บน div ชั่วคราว เพื่อให้ได้สีพื้นหลังถูกต้อง
+  // inject computed colors ก่อน capture เพื่อให้สีไม่จาง
   const clone = el.cloneNode(true);
   clone.style.cssText = 'position:fixed;top:0;left:0;width:'+el.offsetWidth+'px;background:#f4f8f9;z-index:-9999;opacity:1;';
-  // เปิด section ทั้งหมดใน clone
   clone.querySelectorAll('.sec-body').forEach(b=>b.style.display='block');
   clone.querySelectorAll('.btn').forEach(b=>b.style.display='none');
+  // แทนที่ CSS variable ด้วยสีจริงๆ
+  const style = document.createElement('style');
+  style.textContent = `
+    * { --teal:#0a4f5e!important; --teal-m:#1a7a8a!important; --teal-l:#2ea8b8!important; --teal-p:#e8f6f8!important;
+        --gold:#c8a400!important; --gold-bg:#fdf8e8!important;
+        --ok:#2e7d52!important; --ok-bg:#e8f5ee!important;
+        --hi:#c0392b!important; --hi-bg:#fde8e8!important;
+        --warn:#b85c0a!important; --warn-bg:#fff3e0!important;
+        --txt-m:#334155!important; --txt-l:#64748b!important;
+        --border:#d0e8ec!important; --surface:#f8fbfc!important; }
+    .result-banner { background:#0a4f5e!important; }
+    .result-name { color:#fff!important; }
+    .result-meta { color:rgba(255,255,255,0.85)!important; }
+    .result-meta span { color:rgba(255,255,255,0.85)!important; }
+    .sec-hdr { background:#f0f8fa!important; }
+    .sec-ttl { color:#0a4f5e!important; }
+    .tag.ok { background:#e8f5ee!important; color:#2e7d52!important; }
+    .tag.hi { background:#fde8e8!important; color:#c0392b!important; }
+    .tag.lo { background:#fff3e0!important; color:#b85c0a!important; }
+    .dot.ok { background:#2e7d52!important; }
+    .dot.hi { background:#c0392b!important; }
+    .dot.lo { background:#b85c0a!important; }
+    .sum-box.ok .sum-n { color:#2e7d52!important; }
+    .sum-box.wn .sum-n { color:#b85c0a!important; }
+    .sum-box.hi .sum-n { color:#c0392b!important; }
+    .doc-note { background:#fdf8e8!important; border-color:#c8a400!important; }
+    .alert-danger { background:#fde8e8!important; border-color:#c0392b!important; }
+  `;
+  clone.appendChild(style);
   document.body.appendChild(clone);
   
   setTimeout(() => {
@@ -1386,7 +1414,7 @@ function saveResultImage() {
       if (btnEl) btnEl.style.display='flex';
       alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
     });
-  }, 300);
+  }, 400);
 }
 
 
@@ -1754,7 +1782,7 @@ async function deletePatient(pid, name) {
 // EDIT PATIENT
 // ══════════════════════════════════
 function editPatient(pid) {
-  const p = allPatients.find(x => x.pid === pid);
+  const p = allPatients.find(x => String(x.pid) === String(pid));
   if (!p) return;
   document.getElementById('edit-pid').value      = p.pid;
   document.getElementById('edit-name').value     = p.name || '';
