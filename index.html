@@ -1119,26 +1119,17 @@ async function doAI() {
   try {
     const b64=labBase64s[0].split(',')[1];
     const mime=labFiles_[0]?.type||'image/jpeg';
-    const isPdf=mime==='application/pdf';
-    const contentBlock=isPdf
-      ? {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
-      : {type:'image',source:{type:'base64',media_type:mime,data:b64}};
-    const prompt=`อ่านผลแลปจากไฟล์นี้ ตอบเป็น JSON เท่านั้น ไม่มี markdown
-{"found_items":[{"key":"FBS","value":"126"},...],"confidence":"high|medium|low","notes":"..."}
-keys: FBS HbA1c Chol LDL HDL TG Hb WBC Plt AST ALT Cr UA
-ถ้าอ่านไม่ได้ไม่ต้องใส่`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
-        messages:[{role:'user',content:[
-          contentBlock,
-          {type:'text',text:prompt}
-        ]}]})
+    // ส่งผ่าน Apps Script เพื่อหลีกเลี่ยง CORS
+    const res = await api('readLabImage', {
+      imageData: b64,
+      mediaType: mime
     });
-    const data=await res.json();
-    const txt=data.content?.find(b=>b.type==='text')?.text||'{}';
-    const parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    renderAITable(parsed.found_items||[]);
+    if (res.ok && res.data?.found_items) {
+      renderAITable(res.data.found_items);
+    } else {
+      renderAITable([]);
+      alert('AI อ่านไม่ได้ค่ะ กรอกเองได้เลย: ' + (res.error||''));
+    }
   } catch(e) { renderAITable([]); alert('AI เชื่อมต่อไม่ได้ กรอกเองได้เลยค่ะ'); }
   btn.disabled=false; btn.innerHTML='✨ อ่านภาพอีกครั้ง';
 }
