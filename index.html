@@ -1177,7 +1177,6 @@ async function doAI() {
       renderAITable([]);
       alert('AI อ่านไม่ได้ค่ะ: ' + (res.error||''));
     }
-    }
   } catch(e) { renderAITable([]); alert('AI เชื่อมต่อไม่ได้ กรอกเองได้เลยค่ะ'); }
   btn.disabled=false; btn.innerHTML='✨ อ่านภาพอีกครั้ง';
 }
