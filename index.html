@@ -1622,13 +1622,15 @@ function saveResultPDF() {
     }
 
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    if (isIOS) {
-      const pdfBlob = pdf.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      window.open(url, '_blank');
-    } else {
-      pdf.save('ผลตรวจสุขภาพ.pdf');
-    }
+    const pdfBlob = pdf.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ผลตรวจสุขภาพ.pdf';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
   } catch(e) {
     alert('เกิดข้อผิดพลาดค่ะ: ' + e.message);
   }
