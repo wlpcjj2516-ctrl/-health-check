@@ -908,12 +908,7 @@ function showSelectRecord(name, withResult, noResult) {
       btn.style.marginBottom = '10px';
       btn.innerHTML = `📋 รอบตรวจวันที่ ${fmtDate(r.resultDate||r.regDate)}`;
       btn.onclick = () => {
-        renderResult(r);
-        // แสดงปุ่มกลับ
-        setTimeout(() => {
-          const backBtn = document.getElementById('btn-back-records');
-          if (backBtn) backBtn.style.display = 'flex';
-        }, 100);
+        renderResult(r, false, true);
       };
       list.appendChild(btn);
     });
@@ -1355,7 +1350,7 @@ async function saveAttach() {
 // ══════════════════════════════════
 // RENDER RESULT
 // ══════════════════════════════════
-function renderResult(p, isAdmin=false) {
+function renderResult(p, isAdmin=false, hasMultiRecord=false) {
   // ดึงเพศจากชื่อ
   const _name = p.name||'';
   const _gender = (_name.startsWith('นาย')||_name.startsWith('เด็กชาย')) ? 'male'
@@ -1440,7 +1435,7 @@ function renderResult(p, isAdmin=false) {
            <button class="btn btn-gold" onclick="saveResultPDF()">📄 ส่งออก PDF</button>
            <button class="btn btn-ghost" onclick="goPage('pg-list', document.querySelectorAll('.ntab')[1])">← กลับรายชื่อ</button>`
         : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultPDF()">📄 บันทึกเป็น PDF</button>
-           <button class="btn btn-ghost" id="btn-back-records" onclick="goPage('pg-select-record')" style="display:none">← เลือกรอบตรวจอื่น</button>`
+           ${hasMultiRecord ? `<button class="btn btn-ghost" onclick="goPage('pg-select-record')">← เลือกรอบตรวจอื่น</button>` : ''}`
       }
     </div>
     ${secHtml}${noteHtml}`;
