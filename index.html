@@ -728,78 +728,6 @@ const REF = {
       {max:9999,label:'อ้วนระดับ 2',      cls:'hi'},
     ]
   },
-  // CBC
-  WBC: {
-    label:'WBC (เม็ดเลือดขาว)', unit:'x10³/μL', gender:'both',
-    tiers:[
-      {max:10,  label:'ปกติ',        cls:'ok',   minVal:4},
-      {max:12,  label:'เริ่มสูง',    cls:'warn'},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  RBC: {
-    label:'RBC (เม็ดเลือดแดง)', unit:'x10⁶/μL', gender:'both',
-    tiers:[
-      {max:6.5, label:'ปกติ',        cls:'ok',   minVal:3.8},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  Hb: {
-    label:'Hemoglobin (Hb)', unit:'g/dL', gender:'both',
-    tiers:[
-      {max:17,  label:'ปกติ',        cls:'ok',   minVal:11.5},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  MCV: {
-    label:'MCV', unit:'fL', gender:'both',
-    tiers:[
-      {max:100, label:'ปกติ',        cls:'ok',   minVal:80},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  MCH: {
-    label:'MCH', unit:'pg', gender:'both',
-    tiers:[
-      {max:32,  label:'ปกติ',        cls:'ok',   minVal:27},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  RDW: {
-    label:'RDW', unit:'%', gender:'both',
-    tiers:[
-      {max:16,  label:'ปกติ',        cls:'ok',   minVal:11},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  PLT: {
-    label:'Platelet (PLT)', unit:'x10³/μL', gender:'both',
-    tiers:[
-      {max:500, label:'ปกติ',        cls:'ok',   minVal:150},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  Lymph: {
-    label:'Lymphocyte', unit:'%', gender:'both',
-    tiers:[
-      {max:50,  label:'ปกติ',        cls:'ok',   minVal:20},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  Mono: {
-    label:'Monocyte', unit:'%', gender:'both',
-    tiers:[
-      {max:10,  label:'ปกติ',        cls:'ok',   minVal:2},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
-  Neutro: {
-    label:'Neutrophil', unit:'%', gender:'both',
-    tiers:[
-      {max:70,  label:'ปกติ',        cls:'ok',   minVal:40},
-      {max:9999,label:'ผิดปกติ',     cls:'hi'},
-    ]
-  },
   // 2. รอบเอว
   Waist_M: {
     label:'รอบเอว (ชาย)', unit:'cm', gender:'male',
@@ -1185,25 +1113,49 @@ function renderLabThumbs() {
   btn.style.display=labBase64s.length?'flex':'none';
 }
 
+async function resizeImage(dataUrl, maxW=1600, maxH=1600, quality=0.85) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxW || h > maxH) {
+        const ratio = Math.min(maxW/w, maxH/h);
+        w = Math.round(w*ratio); h = Math.round(h*ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
 async function doAI() {
   const btn=document.getElementById('btn-ai');
   btn.disabled=true; btn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite"></span> AI กำลังอ่านภาพ...';
   try {
-    const b64=labBase64s[0].split(',')[1];
-    const mime=labFiles_[0]?.type||'image/jpeg';
+    const originalB64 = labBase64s[0];
+    const isPdf = labFiles_[0]?.type === 'application/pdf';
+    let b64, mime;
+    if (isPdf) {
+      b64 = originalB64.split(',')[1];
+      mime = 'application/pdf';
+    } else {
+      const resized = await resizeImage(originalB64);
+      b64 = resized.split(',')[1];
+      mime = 'image/jpeg';
+    }
     // ส่งผ่าน Apps Script เพื่อหลีกเลี่ยง CORS
     const res = await api('readLabImage', {
       imageData: b64,
       mediaType: mime
     });
-    if (res.ok && res.data) {
-      const items = res.data.found_items || (Array.isArray(res.data) ? res.data : []);
-      if (items.length > 0) {
-        renderAITable(items);
-      } else {
-        renderAITable([]);
-        alert('AI อ่านไม่พบค่าในภาพค่ะ กรอกเองได้เลย');
-      }
+    if (res.ok && res.data?.found_items) {
+      renderAITable(res.data.found_items);
+    } else {
+      renderAITable([]);
+      alert('AI อ่านไม่ได้ค่ะ กรอกเองได้เลย: ' + (res.error||''));
     }
   } catch(e) { renderAITable([]); alert('AI เชื่อมต่อไม่ได้ กรอกเองได้เลยค่ะ'); }
   btn.disabled=false; btn.innerHTML='✨ อ่านภาพอีกครั้ง';
@@ -1211,7 +1163,7 @@ async function doAI() {
 
 // หมวดหมู่สำหรับตารางกรอกผล
 const LAB_GROUPS = [
-  { title:'🩸 ความสมบูรณ์ของเลือด (CBC)', keys:['WBC','RBC','Hb','Hct_M','Hct_F','MCV','MCH','RDW','PLT','Lymph','Mono','Neutro'] },
+  { title:'🩸 ความสมบูรณ์ของเลือด', keys:['Hct_M','Hct_F'] },
   { title:'💊 น้ำตาลในเลือด',        keys:['FBS'] },
   { title:'💛 ไขมันในเลือด',         keys:['Chol','TG','HDL_M','HDL_F','LDL'] },
   { title:'🫀 การทำงานของตับ',        keys:['AST','ALT','ALP'] },
@@ -1330,7 +1282,6 @@ function renderResult(p, isAdmin=false) {
   const loL=flags.filter(f=>f.flag==='lo');
   const okN=flags.filter(f=>f.flag==='ok').length;
   const sections=[
-    {title:'🩸 ความสมบูรณ์ของเลือด (CBC)', ico:'🩸',bg:'#e8f6f8',keys:['WBC','RBC','Hb','Hct_M','Hct_F','MCV','MCH','RDW','PLT','Lymph','Mono','Neutro']},
     {title:'น้ำตาลในเลือด',      ico:'🧪',bg:'#fef3e8',keys:['FBS']},
     {title:'ไขมันในเลือด',       ico:'💛',bg:'#fde8e8',keys:['Chol','TG','LDL','HDL_M','HDL_F']},
     {title:'ความดันโลหิต',       ico:'💓',bg:'#fde8f8',keys:['SBP','DBP']},
