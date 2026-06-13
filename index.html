@@ -907,7 +907,14 @@ function showSelectRecord(name, withResult, noResult) {
       btn.className = 'btn btn-primary btn-full';
       btn.style.marginBottom = '10px';
       btn.innerHTML = `📋 รอบตรวจวันที่ ${fmtDate(r.resultDate||r.regDate)}`;
-      btn.onclick = () => renderResult(r);
+      btn.onclick = () => {
+        renderResult(r);
+        // แสดงปุ่มกลับ
+        setTimeout(() => {
+          const backBtn = document.getElementById('btn-back-records');
+          if (backBtn) backBtn.style.display = 'flex';
+        }, 100);
+      };
       list.appendChild(btn);
     });
   }
@@ -1432,7 +1439,8 @@ function renderResult(p, isAdmin=false) {
         ? `<button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์</button>
            <button class="btn btn-gold" onclick="saveResultPDF()">📄 ส่งออก PDF</button>
            <button class="btn btn-ghost" onclick="goPage('pg-list', document.querySelectorAll('.ntab')[1])">← กลับรายชื่อ</button>`
-        : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultPDF()">📄 บันทึกเป็น PDF</button>`
+        : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultPDF()">📄 บันทึกเป็น PDF</button>
+           <button class="btn btn-ghost" id="btn-back-records" onclick="goPage('pg-select-record')" style="display:none">← เลือกรอบตรวจอื่น</button>`
       }
     </div>
     ${secHtml}${noteHtml}`;
