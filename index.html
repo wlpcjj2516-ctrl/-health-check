@@ -441,6 +441,16 @@ tbody tr:last-child td{border:none}
   </div>
 </div>
 
+<!-- PATIENT: เลือกรอบตรวจ -->
+<div class="page" id="pg-select-record">
+  <div class="smart-hero fu">
+    <div class="ico">📋</div>
+    <h2 id="sel-rec-name">—</h2>
+    <p>กรุณาเลือกรอบการตรวจที่ต้องการดูผลค่ะ</p>
+  </div>
+  <div class="card fu" id="sel-rec-list"></div>
+</div>
+
 <!-- PATIENT: รอผล -->
 <div class="page" id="pg-wait">
   <div class="card fu">
@@ -857,22 +867,64 @@ async function smartRoute() {
     hideOverlay();
 
     if (!p.found) {
-      // ยังไม่มีข้อมูล → ลงทะเบียน
       document.getElementById('reg-pid').value = pid;
       goPage('pg-register');
-    } else if (p.hasResult) {
-      // ผลออกแล้ว → ดูผล
-      renderResult(p);
     } else {
-      // รอผล
-      document.getElementById('wait-name').textContent = 'สวัสดีค่ะ คุณ' + p.name;
-      document.getElementById('wait-date').textContent = p.regDate || '—';
-      goPage('pg-wait');
+      const records = p.records || [p];
+      const withResult = records.filter(r => r.hasResult);
+      const noResult   = records.filter(r => !r.hasResult);
+
+      if (withResult.length === 0) {
+        // ไม่มีผลเลย → รอผล
+        document.getElementById('wait-name').textContent = 'สวัสดีค่ะ คุณ' + p.name;
+        document.getElementById('wait-date').textContent = p.regDate || '—';
+        goPage('pg-wait');
+      } else if (withResult.length === 1 && noResult.length === 0) {
+        // มีผลรอบเดียว → ดูผลเลย
+        renderResult(withResult[0]);
+      } else {
+        // มีหลายรอบ → แสดงหน้าเลือก
+        showSelectRecord(p.name, withResult, noResult);
+      }
     }
   } catch(e) {
     hideOverlay();
     alert('เกิดข้อผิดพลาด: ' + e.message + '\nกรุณาลองใหม่หรือติดต่อเจ้าหน้าที่ค่ะ');
   }
+}
+
+function showSelectRecord(name, withResult, noResult) {
+  document.getElementById('sel-rec-name').textContent = 'สวัสดีค่ะ คุณ' + name;
+  const list = document.getElementById('sel-rec-list');
+  list.innerHTML = '';
+
+  if (withResult.length > 0) {
+    const hdr = document.createElement('div');
+    hdr.innerHTML = '<div style="font-family:\'Noto Serif Thai\',serif;font-weight:700;color:var(--teal);margin-bottom:12px;font-size:.95rem">✅ ผลพร้อมแล้ว — เลือกรอบที่ต้องการดูค่ะ</div>';
+    list.appendChild(hdr);
+    withResult.forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary btn-full';
+      btn.style.marginBottom = '10px';
+      btn.innerHTML = `📋 รอบตรวจวันที่ ${fmtDate(r.resultDate||r.regDate)}`;
+      btn.onclick = () => renderResult(r);
+      list.appendChild(btn);
+    });
+  }
+
+  if (noResult.length > 0) {
+    const hdr2 = document.createElement('div');
+    hdr2.innerHTML = '<div style="font-family:\'Noto Serif Thai\',serif;font-weight:700;color:var(--warn);margin:16px 0 12px;font-size:.9rem">⏳ รอผลตรวจ</div>';
+    list.appendChild(hdr2);
+    noResult.forEach(r => {
+      const div = document.createElement('div');
+      div.style.cssText = 'background:var(--warn-bg);border:1.5px solid var(--warn);border-radius:10px;padding:12px 16px;margin-bottom:8px;font-size:.84rem;color:var(--warn)';
+      div.innerHTML = `⏳ ลงทะเบียนวันที่ ${fmtDate(r.regDate)} — กำลังรอผลตรวจค่ะ`;
+      list.appendChild(div);
+    });
+  }
+
+  goPage('pg-select-record');
 }
 
 // ══════════════════════════════════
@@ -921,6 +973,8 @@ async function confirmReg() {
     const res = await api('register', pendingReg);
     hideOverlay();
     if (res.ok) {
+      // เก็บ rowId ไว้ใช้ตอนแนบผล
+      pendingReg.rowId = res.rowId;
       document.getElementById('reg-ok-name').textContent = pendingReg.name + ' — บันทึกเรียบร้อยแล้วค่ะ';
       goPage('pg-reg-ok');
     } else {
