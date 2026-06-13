@@ -1432,7 +1432,7 @@ function renderResult(p, isAdmin=false, hasMultiRecord=false) {
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap" class="fu">
       ${isAdmin
         ? `<button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์</button>
-           <button class="btn btn-gold" onclick="saveResultPDF()">📄 ส่งออก PDF</button>
+           <button class="btn btn-gold" id="btn-save-img" onclick="saveResultPDF()">📄 ส่งออก PDF</button>
            <button class="btn btn-ghost" onclick="goPage('pg-list', document.querySelectorAll('.ntab')[1])">← กลับรายชื่อ</button>`
         : `<button class="btn btn-primary" id="btn-save-img" onclick="saveResultPDF()">📄 บันทึกเป็น PDF</button>
            ${hasMultiRecord ? `<button class="btn btn-ghost" onclick="goPage('pg-select-record')">← เลือกรอบตรวจอื่น</button>` : ''}`
